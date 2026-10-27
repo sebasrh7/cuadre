@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
+import { categorizePendingExpenses } from "@/lib/categories/apply";
 import {
   FOREIGN_INCOME_CATEGORY,
   planStatementImport,
@@ -42,7 +43,7 @@ const importSchema = z.object({
 export type ImportInput = z.input<typeof importSchema>;
 
 export type ImportResult =
-  | { ok: true; inserted: number; duplicates: number; linkedIncomes: number }
+  | { ok: true; inserted: number; duplicates: number; linkedIncomes: number; categorized: number; uncategorized: number }
   | { ok: false; error: string };
 
 export async function importStatement(input: ImportInput): Promise<ImportResult> {
@@ -85,12 +86,16 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
     );
 
   const linkedIncomes = await linkForeignIncomes(supabase, statement.from, statement.to);
+  // Si la categorización falla, los movimientos ya quedaron guardados: se reintenta desde /movimientos.
+  const categories = await categorizePendingExpenses(supabase).catch(() => null);
 
   return {
     ok: true,
     inserted: inserted?.length ?? 0,
     duplicates: rows.length - (inserted?.length ?? 0),
     linkedIncomes,
+    categorized: categories?.categorized ?? 0,
+    uncategorized: categories?.pending ?? 0,
   };
 }
 

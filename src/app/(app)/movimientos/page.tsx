@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
 import { formatCop } from "@/lib/money/format";
+import { CategorizeButton, CategorySelect } from "./category-controls";
 
 const KIND_LABELS = { income: "Ingreso", expense: "Gasto", own_transfer: "Entre mis cuentas" } as const;
 
@@ -40,9 +41,11 @@ async function MovementList() {
   }
 
   const months = Map.groupBy(data, (m) => m.occurred_on.slice(0, 7));
+  const uncategorized = data.filter((m) => m.kind === "expense" && !m.category && m.counterparty).length;
 
   return (
     <div className="flex flex-col gap-6">
+      <CategorizeButton uncategorized={uncategorized} />
       {[...months].map(([month, movements]) => {
         const total = (kind: string) =>
           movements.filter((m) => m.kind === kind).reduce((t, m) => t + m.amount_cop, 0);
@@ -59,7 +62,12 @@ async function MovementList() {
                 <li key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2">
                   <span className="text-muted tabular-nums">{m.occurred_on.slice(8)}</span>
                   <span className="min-w-0 flex-1 truncate">{m.counterparty ?? "—"}</span>
-                  <span className="text-muted">{m.category ?? KIND_LABELS[m.kind as keyof typeof KIND_LABELS]}</span>
+                  {m.kind === "expense" && m.counterparty ? (
+                    // La key lo vuelve a montar cuando la categoría cambia en el servidor.
+                    <CategorySelect key={m.category ?? ""} counterparty={m.counterparty} category={m.category} />
+                  ) : (
+                    <span className="text-muted">{m.category ?? KIND_LABELS[m.kind as keyof typeof KIND_LABELS]}</span>
+                  )}
                   <span
                     className={`tabular-nums ${m.kind === "own_transfer" ? "text-muted" : m.direction === "in" ? "text-accent" : ""}`}
                   >

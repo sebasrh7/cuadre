@@ -43,6 +43,14 @@ describe("planStatementImport", () => {
     expect(own).toEqual(["ANDRES PRUEBA EJEMPLO", "Nequi"]);
   });
 
+  it("categoriza las transferencias a terceros sin pasar por la IA y deja los gastos para después", () => {
+    const thirdParty = planStatementImport(statement(), { nequiIsOwn: false, ownPersonNames: [] });
+    expect(thirdParty.find((m) => m.counterparty === "ANDRES PRUEBA EJEMPLO")?.category).toBe("Transferencias");
+    expect(thirdParty.find((m) => m.counterparty === "Nequi")?.category).toBe("Transferencias");
+    expect(thirdParty.find((m) => m.counterparty === "TIENDA EJEMPLO")?.category).toBeNull();
+    expect(plan.find((m) => m.kind === "own_transfer")?.category).toBeNull();
+  });
+
   it("respeta cuando el usuario dice que Nequi no es suyo", () => {
     const nequi = planStatementImport(statement(), { ...decisions, nequiIsOwn: false }).find(
       (m) => m.counterparty === "Nequi",

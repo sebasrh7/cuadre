@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
+import { UNCATEGORIZED } from "@/lib/categories/categories";
 import { formatCop } from "@/lib/money/format";
 import { loadTaxRules } from "@/lib/tax/load";
 import { checkRenta, unmeasuredRentaThresholds, type RentaCheck } from "@/lib/tax/renta";
@@ -31,7 +32,7 @@ async function Dashboard() {
   const [{ data: movements }, taxRules] = await Promise.all([
     supabase
       .from("movements")
-      .select("occurred_on, amount_cop, direction, kind")
+      .select("occurred_on, amount_cop, direction, kind, category")
       .gte("occurred_on", `${year}-01-01`)
       .lte("occurred_on", `${year}-12-31`),
     loadTaxRules(supabase, year),
@@ -85,6 +86,12 @@ async function Dashboard() {
         </p>
       </section>
 
+      <ExpensesCard
+        expenses={movements.filter((m) => m.kind === "expense")}
+        lastMonth={lastMonth.month}
+        lastMonthLabel={monthName(lastMonth.month)}
+      />
+
       {taxRules ? (
         <>
           {taxRules.isFallback && (
@@ -119,6 +126,61 @@ async function Dashboard() {
         para ver la tasa a la que recibiste cada pago.
       </p>
     </div>
+  );
+}
+
+function ExpensesCard({
+  expenses,
+  lastMonth,
+  lastMonthLabel,
+}: {
+  expenses: { occurred_on: string; amount_cop: number; category: string | null }[];
+  lastMonth: string;
+  lastMonthLabel: string;
+}) {
+  if (!expenses.length) return null;
+
+  const byCategory = (rows: typeof expenses) => {
+    const totals = new Map<string, number>();
+    for (const e of rows) {
+      const category = e.category ?? UNCATEGORIZED;
+      totals.set(category, (totals.get(category) ?? 0) + e.amount_cop);
+    }
+    return [...totals].sort((a, b) => b[1] - a[1]);
+  };
+  const year = byCategory(expenses);
+  const month = new Map(byCategory(expenses.filter((e) => e.occurred_on.startsWith(lastMonth))));
+  const yearTotal = year.reduce((t, [, v]) => t + v, 0);
+  const max = year[0]?.[1] ?? 1;
+
+  return (
+    <section className="flex flex-col gap-3 rounded-lg border border-border p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-semibold">Gastos por categoría</h2>
+        <p className="text-sm text-muted tabular-nums">Año {formatCop(yearTotal)}</p>
+      </div>
+      <ul className="flex flex-col gap-2 text-sm">
+        {year.map(([category, total]) => (
+          <li key={category} className="flex flex-col gap-1">
+            <div className="flex justify-between gap-2">
+              <span className={category === UNCATEGORIZED ? "text-danger" : ""}>{category}</span>
+              <span className="tabular-nums">
+                {formatCop(total)}
+                <span className="text-muted"> · {lastMonthLabel.toLowerCase()} {formatCop(month.get(category) ?? 0)}</span>
+              </span>
+            </div>
+            <div className="h-1.5 rounded bg-border">
+              <div className="h-full rounded bg-accent" style={{ width: `${(total / max) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+      {year.some(([c]) => c === UNCATEGORIZED) && (
+        <Link href="/movimientos" className="self-start text-xs text-accent underline">
+          Categorizar los gastos pendientes
+        </Link>
+      )}
+    </section>
   );
 }
 

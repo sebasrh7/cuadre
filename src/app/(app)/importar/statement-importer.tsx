@@ -225,6 +225,10 @@ function Done({ result, onAgain }: { result: Extract<ImportResult, { ok: true }>
         {result.duplicates > 0 && (
           <li>{plural(result.duplicates, "ya estaba guardado y se omitió", "ya estaban guardados y se omitieron")}</li>
         )}
+        {result.categorized > 0 && <li>{plural(result.categorized, "gasto categorizado", "gastos categorizados")}</li>}
+        {result.uncategorized > 0 && (
+          <li>{plural(result.uncategorized, "gasto quedó sin categoría", "gastos quedaron sin categoría")}: puedes asignarla en Movimientos</li>
+        )}
         <li>
           {result.linkedIncomes > 0
             ? `${plural(result.linkedIncomes, "ingreso en USD enlazado", "ingresos en USD enlazados")} con su abono en pesos`

@@ -45,6 +45,10 @@ describe("parseBancolombiaStatement", () => {
       i === 3 ? { ...m, description: [[79, "TRANSF A MARIA"], [170, "MU|OZ"]] as fx.FixtureMovement["description"] } : m,
     );
     expect(parse(fx.buildStatement({ rows: upper })).movements[3].description).toBe("TRANSF A MARIA MUÑOZ");
+    const qr = fx.movements.map((m, i) =>
+      i === 3 ? { ...m, description: [[79, "PAGO QR PEDRO"], [170, "PI#A"]] as fx.FixtureMovement["description"] } : m,
+    );
+    expect(parse(fx.buildStatement({ rows: qr })).movements[3].description).toBe("PAGO QR PEDRO PIÑA");
   });
 
   it("asigna el año siguiente a los meses de enero de un periodo que cruza de año", () => {

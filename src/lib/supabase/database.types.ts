@@ -39,6 +39,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          day: string
+          requests: number
+          user_id: string
+        }
+        Insert: {
+          day: string
+          requests?: number
+          user_id: string
+        }
+        Update: {
+          day?: string
+          requests?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       foreign_incomes: {
         Row: {
           amount_minor: number
@@ -79,6 +97,30 @@ export type Database = {
             referencedColumns: ["id", "user_id"]
           },
         ]
+      }
+      merchant_categories: {
+        Row: {
+          category: string
+          merchant_key: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          merchant_key: string
+          source: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          category?: string
+          merchant_key?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       movements: {
         Row: {
@@ -244,6 +286,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_ai_quota: { Args: { p_daily_limit: number }; Returns: boolean }
       save_onboarding: {
         Args: {
           p_accounts: Json

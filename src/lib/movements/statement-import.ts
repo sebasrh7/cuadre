@@ -1,10 +1,13 @@
 import { centsToPesos } from "@/lib/parsers/amount";
 import type { Statement } from "@/lib/parsers/bancolombia-statement";
 import { normalizeName } from "./own-transfer";
-import { classifyStatementMovement, groupMonthlyInterest } from "./statement-classify";
+import { classifyStatementMovement, groupMonthlyInterest, type StatementKind } from "./statement-classify";
 
 export const FOREIGN_INCOME_CATEGORY = "Ingreso del exterior";
 export const INTEREST_CATEGORY = "Intereses";
+/** Pagos a personas: se categorizan aquí para que sus nombres nunca lleguen a la IA. */
+export const TRANSFER_CATEGORY = "Transferencias";
+export const CASH_CATEGORY = "Efectivo";
 
 /** Lo que el usuario confirma en la vista previa. */
 export interface ImportDecisions {
@@ -59,7 +62,7 @@ export function planStatementImport(statement: Statement, decisions: ImportDecis
       direction,
       kind: isOwn ? "own_transfer" : direction === "in" ? "income" : "expense",
       counterparty,
-      category: kind === "foreign_income" ? FOREIGN_INCOME_CATEGORY : null,
+      category: isOwn ? null : categoryFor(kind, counterparty),
       accountLast4: last4,
       dedupeKey: `${base}|${occurrence}`,
     });
@@ -80,6 +83,14 @@ export function planStatementImport(statement: Statement, decisions: ImportDecis
   }
 
   return planned.sort((a, b) => a.occurredOn.localeCompare(b.occurredOn));
+}
+
+function categoryFor(kind: StatementKind, counterparty: string | null): string | null {
+  if (kind === "foreign_income") return FOREIGN_INCOME_CATEGORY;
+  if (kind === "person_transfer" || kind === "wallet_transfer") return TRANSFER_CATEGORY;
+  if (kind === "expense" && counterparty === "Retiro en cajero") return CASH_CATEGORY;
+  // El resto de gastos queda sin categoría: lo resuelven las reglas o la IA.
+  return null;
 }
 
 export interface StatementGiro {

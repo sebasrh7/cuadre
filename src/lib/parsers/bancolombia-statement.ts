@@ -159,7 +159,9 @@ function readMovement(row: Row, period: { from: string; to: string }): Statement
     .join(" ")
     .replace(/\s+/g, " ")
     .trim()
-    // La fuente del extracto dibuja la ñ como "|" ("MU|OZ", "Mu|oz").
+    // La fuente del extracto dibuja la ñ como "|" ("MU|OZ", "Mu|oz") o, en
+    // pagos QR, como "#" entre letras ("PI#A").
+    .replace(/(\p{L})#(?=\p{L})/gu, "$1|")
     .replace(/(\p{L}?)\|/gu, (_, before: string) => `${before}${before && before === before.toLowerCase() ? "ñ" : "Ñ"}`);
 
   return {
