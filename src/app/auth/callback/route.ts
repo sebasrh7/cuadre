@@ -11,5 +11,5 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(new URL("/inicio", request.url));
   }
 
-  return NextResponse.redirect(new URL("/ingresar?error=google", request.url));
+  return NextResponse.redirect(new URL("/ingresar?error=oauth", request.url));
 }

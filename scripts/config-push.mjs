@@ -14,12 +14,7 @@ for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
   const match = /^([A-Z0-9_]+)=(.*)$/.exec(line.trim());
   if (match) env[match[1]] = match[2].trim().replace(/^(["'])(.*)\1$/, "$2");
 }
-// Google muestra la contraseña de aplicación con espacios; SMTP la quiere sin ellos.
-if (env.SMTP_GMAIL_APP_PASSWORD) {
-  env.SMTP_GMAIL_APP_PASSWORD = env.SMTP_GMAIL_APP_PASSWORD.replace(/\s/g, "");
-}
-
-const secrets = ["SMTP_GMAIL_APP_PASSWORD", "GOOGLE_OAUTH_CLIENT_SECRET"]
+const secrets = ["GOOGLE_OAUTH_CLIENT_SECRET"]
   .map((name) => env[name])
   .filter(Boolean);
 const apply = argv.includes("--yes");

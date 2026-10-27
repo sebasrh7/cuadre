@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { FormError } from "@/components/ui";
 import { loginWithGoogle } from "./actions";
-import { LoginForm } from "./login-form";
 
 export default function LoginPage({ searchParams }: PageProps<"/ingresar">) {
   return (
@@ -11,9 +10,8 @@ export default function LoginPage({ searchParams }: PageProps<"/ingresar">) {
         Cuadre
       </Link>
       <h1 className="text-lg font-medium">Ingresa o crea tu cuenta</h1>
-      {/* Solo el aviso espera la URL; los formularios no se vuelven a montar. */}
       <Suspense>
-        <GoogleError searchParams={searchParams} />
+        <OAuthError searchParams={searchParams} />
       </Suspense>
       <form action={loginWithGoogle}>
         <button className="flex w-full items-center justify-center gap-3 rounded-md border border-border px-4 py-2 font-medium">
@@ -21,19 +19,17 @@ export default function LoginPage({ searchParams }: PageProps<"/ingresar">) {
           Continuar con Google
         </button>
       </form>
-      <div className="flex items-center gap-3 text-sm text-muted">
-        <span className="h-px flex-1 bg-border" />o con un código por correo
-        <span className="h-px flex-1 bg-border" />
-      </div>
-      <LoginForm />
+      <p className="text-sm text-muted">
+        Usamos tu cuenta de Google solo para identificarte: no leemos tu correo.
+      </p>
     </main>
   );
 }
 
-async function GoogleError({ searchParams }: Pick<PageProps<"/ingresar">, "searchParams">) {
+async function OAuthError({ searchParams }: Pick<PageProps<"/ingresar">, "searchParams">) {
   const { error } = await searchParams;
-  if (error !== "google") return null;
-  return <FormError message="No pudimos entrar con Google. Inténtalo de nuevo o usa tu correo." />;
+  if (error !== "oauth") return null;
+  return <FormError message="No pudimos entrar con Google. Inténtalo de nuevo." />;
 }
 
 function GoogleIcon() {

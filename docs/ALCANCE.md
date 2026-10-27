@@ -51,7 +51,7 @@
 
 | # | Funcionalidad | Detalle |
 |---|---|---|
-| 1 | Autenticación | Código de 6 dígitos por correo (Supabase Auth + SMTP de Gmail, gratis) ✅; Google OAuth después. Resend cuando haya dominio propio |
+| 1 | Autenticación | Solo Google (Supabase Auth) ✅. Sin correo ni contraseñas: no hay que enviar correos ni guardar claves. Si los usuarios de prueba lo piden: cuenta propia (requiere SMTP para confirmar y recuperar) o teléfono (SMS de pago) |
 | 2 | Onboarding (≤2 min) | Tipo de independiente, riesgo ARL, últimos dígitos del NIT/cédula, **cuentas, llaves y nombres propios** (para detectar transferencias propias) |
 | 3 | Importar extracto Bancolombia | PDF + contraseña, procesado en el navegador; vista previa antes de guardar |
 | 4 | Pegar/compartir alertas | Parser de las 4 plantillas; deduplicación |
