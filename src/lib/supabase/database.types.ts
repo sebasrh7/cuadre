@@ -226,27 +226,36 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_categorization: boolean
           arl_risk: number | null
           created_at: string
           id: string
           nit_last_digit: number | null
           onboarded_at: string | null
+          privacy_accepted_at: string | null
+          privacy_version: string | null
           worker_type: string | null
         }
         Insert: {
+          ai_categorization?: boolean
           arl_risk?: number | null
           created_at?: string
           id: string
           nit_last_digit?: number | null
           onboarded_at?: string | null
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
           worker_type?: string | null
         }
         Update: {
+          ai_categorization?: boolean
           arl_risk?: number | null
           created_at?: string
           id?: string
           nit_last_digit?: number | null
           onboarded_at?: string | null
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
           worker_type?: string | null
         }
         Relationships: []
@@ -287,6 +296,7 @@ export type Database = {
     }
     Functions: {
       consume_ai_quota: { Args: { p_daily_limit: number }; Returns: boolean }
+      delete_my_account: { Args: never; Returns: undefined }
       save_onboarding: {
         Args: {
           p_accounts: Json

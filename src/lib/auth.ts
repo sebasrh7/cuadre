@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { PRIVACY_VERSION } from "@/lib/privacy";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -15,4 +16,19 @@ export async function requireUser() {
   const userId = data?.claims?.sub;
   if (!userId) redirect("/ingresar");
   return { supabase, userId };
+}
+
+/**
+ * Como `requireUser`, pero exige el onboarding y la autorización de datos de
+ * la versión vigente de la política (Ley 1581). Si falta, va al onboarding.
+ */
+export async function requireConsentedUser() {
+  const { supabase, userId } = await requireUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("onboarded_at, privacy_version, ai_categorization, arl_risk")
+    .eq("id", userId)
+    .single();
+  if (!profile?.onboarded_at || profile.privacy_version !== PRIVACY_VERSION) redirect("/onboarding");
+  return { supabase, userId, profile };
 }

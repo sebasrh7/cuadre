@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
 import { saveOnboarding, type OnboardingState } from "./actions";
@@ -13,6 +14,8 @@ export type OnboardingDefaults = {
   savingsLast4: string;
   debitCardLast4: string;
   creditCardLast4: string;
+  privacyAccepted: boolean;
+  aiCategorization: boolean;
 };
 
 export function OnboardingForm({ defaults }: { defaults: OnboardingDefaults }) {
@@ -82,6 +85,28 @@ export function OnboardingForm({ defaults }: { defaults: OnboardingDefaults }) {
             <Input name="creditCardLast4" inputMode="numeric" maxLength={4} defaultValue={defaults.creditCardLast4} />
           </Field>
         </div>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-3 text-sm">
+        <legend className="mb-2 font-semibold">Tus datos</legend>
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="privacyAccepted" defaultChecked={defaults.privacyAccepted} required className="mt-1" />
+          <span>
+            Autorizo a Cuadre a tratar mis datos según la{" "}
+            <Link href="/privacidad" target="_blank" className="text-accent underline">
+              política de tratamiento de datos
+            </Link>
+            .
+          </span>
+        </label>
+        {e.privacyAccepted && <span className="text-danger">{e.privacyAccepted}</span>}
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="aiCategorization" defaultChecked={defaults.aiCategorization} className="mt-1" />
+          <span>
+            Opcional: usar IA (Gemini, de Google) para sugerir la categoría de mis gastos. Solo se envían nombres de
+            comercio, sin montos, fechas ni nombres de personas. Puedes cambiarlo cuando quieras.
+          </span>
+        </label>
       </fieldset>
 
       <FormError message={state.error} />

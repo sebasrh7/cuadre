@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth";
+import { requireConsentedUser } from "@/lib/auth";
 import { effectiveRate, formatCop, formatRate, formatUsd } from "@/lib/money/format";
 import { deleteForeignIncome } from "./actions";
 import { IncomeForm } from "./income-form";
@@ -33,7 +33,7 @@ async function Form() {
 }
 
 async function IncomeList() {
-  const { supabase } = await requireUser();
+  const { supabase } = await requireConsentedUser();
   const { data: incomes, error } = await supabase
     .from("foreign_incomes")
     .select("id, received_on, amount_minor, payer, movements(amount_cop)")

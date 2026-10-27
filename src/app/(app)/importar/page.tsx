@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth";
+import { requireConsentedUser } from "@/lib/auth";
 import { StatementImporter } from "./statement-importer";
 
 export default function ImportPage() {
@@ -20,7 +20,7 @@ export default function ImportPage() {
 }
 
 async function Importer() {
-  const { supabase } = await requireUser();
+  const { supabase } = await requireConsentedUser();
   const { data } = await supabase.from("own_aliases").select("value").eq("kind", "name");
   return <StatementImporter ownNames={(data ?? []).map((a) => a.value)} />;
 }

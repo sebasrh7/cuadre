@@ -50,6 +50,7 @@ describe("onboardingSchema", () => {
     savingsLast4: "2222",
     debitCardLast4: "",
     creditCardLast4: "1111",
+    privacyAccepted: "on",
   };
 
   it("separa las listas y quita repetidos", () => {
@@ -60,6 +61,15 @@ describe("onboardingSchema", () => {
 
   it("exige al menos un nombre propio", () => {
     expect(onboardingSchema.safeParse({ ...base, ownNames: " , " }).success).toBe(false);
+  });
+
+  it("exige aceptar la política de datos", () => {
+    expect(onboardingSchema.safeParse({ ...base, privacyAccepted: undefined }).success).toBe(false);
+  });
+
+  it("deja la IA apagada si no se marca", () => {
+    expect(onboardingSchema.parse(base).aiCategorization).toBe(false);
+    expect(onboardingSchema.parse({ ...base, aiCategorization: "on" }).aiCategorization).toBe(true);
   });
 
   it("rechaza números de cuenta completos", () => {

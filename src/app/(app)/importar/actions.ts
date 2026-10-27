@@ -2,7 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireConsentedUser, type requireUser } from "@/lib/auth";
 import { categorizePendingExpenses } from "@/lib/categories/apply";
 import {
   FOREIGN_INCOME_CATEGORY,
@@ -54,7 +54,7 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
   // No se confía en el navegador: el extracto debe volver a cuadrar aquí.
   if (verifyStatement(statement)) return { ok: false, error: "El extracto no cuadra. No se guardó nada." };
 
-  const { supabase, userId } = await requireUser();
+  const { supabase, userId, profile } = await requireConsentedUser();
   const planned = planStatementImport(statement, decisions);
 
   const rows = planned.map((m) => ({
@@ -87,7 +87,7 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
 
   const linkedIncomes = await linkForeignIncomes(supabase, statement.from, statement.to);
   // Si la categorización falla, los movimientos ya quedaron guardados: se reintenta desde /movimientos.
-  const categories = await categorizePendingExpenses(supabase).catch(() => null);
+  const categories = await categorizePendingExpenses(supabase, profile.ai_categorization).catch(() => null);
 
   return {
     ok: true,

@@ -20,7 +20,12 @@ export default function LoginPage({ searchParams }: PageProps<"/ingresar">) {
         </button>
       </form>
       <p className="text-sm text-muted">
-        Usamos tu cuenta de Google solo para identificarte: no leemos tu correo.
+        Usamos tu cuenta de Google solo para identificarte: no leemos tu correo. Antes de guardar cualquier dato te
+        pediremos aceptar la{" "}
+        <Link href="/privacidad" className="underline">
+          política de tratamiento de datos
+        </Link>
+        .
       </p>
     </main>
   );

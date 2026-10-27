@@ -50,7 +50,7 @@ export function CategorizeButton({ uncategorized }: { uncategorized: number }) {
           {summary.categorized} categorizados
           {summary.personal > 0 && ` · ${summary.personal} parecen pagos a personas: asígnales categoría tú (no se envían a la IA)`}
           {summary.pending - summary.personal > 0 &&
-            ` · ${summary.pending - summary.personal} pendientes${summary.aiAvailable ? " (sin cupo de IA hoy o la IA no respondió)" : " (la IA no está configurada)"}`}
+            ` · ${summary.pending - summary.personal} pendientes${summary.aiAvailable ? " (sin cupo de IA hoy o la IA no respondió)" : " (la IA está apagada: actívala en Mi cuenta o asígnalas tú)"}`}
           . Puedes corregir cualquiera: el cambio aplica a todos los gastos de ese comercio.
         </p>
       )}

@@ -10,7 +10,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             Cuadre
           </Link>
           <Link href="/movimientos">Movimientos</Link>
-          <Link href="/onboarding">Mis cuentas</Link>
+          <Link href="/cuenta">Mi cuenta</Link>
           <form action={logout} className="ml-auto">
             <button className="text-muted">Salir</button>
           </form>

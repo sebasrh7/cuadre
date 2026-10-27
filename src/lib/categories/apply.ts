@@ -18,9 +18,12 @@ export interface CategorizeSummary {
   aiAvailable: boolean;
 }
 
-/** Categoriza los gastos sin categoría del usuario y guarda lo aprendido. */
-export async function categorizePendingExpenses(supabase: Supabase): Promise<CategorizeSummary> {
-  const provider = createGeminiProvider();
+/**
+ * Categoriza los gastos sin categoría del usuario y guarda lo aprendido. La IA
+ * solo se usa si el usuario la activó (`allowAi`); sin ella quedan las reglas.
+ */
+export async function categorizePendingExpenses(supabase: Supabase, allowAi: boolean): Promise<CategorizeSummary> {
+  const provider = allowAi ? createGeminiProvider() : null;
   const { data: movements } = await supabase
     .from("movements")
     .select("id, counterparty")

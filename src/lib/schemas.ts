@@ -34,6 +34,12 @@ export const onboardingSchema = z.object({
   savingsLast4: last4,
   debitCardLast4: last4,
   creditCardLast4: last4,
+  // Ley 1581: autorización previa y expresa. Un checkbox sin marcar no llega en el formulario.
+  privacyAccepted: z.literal("on", { message: "Debes aceptar la política para usar Cuadre" }),
+  aiCategorization: z
+    .literal("on")
+    .optional()
+    .transform((v) => v === "on"),
 });
 
 export type OnboardingInput = z.output<typeof onboardingSchema>;

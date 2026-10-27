@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
-const PUBLIC_PATHS = ["/", "/ingresar", "/auth/callback"];
+const PUBLIC_PATHS = ["/", "/ingresar", "/auth/callback", "/privacidad"];
 
 /**
  * Refresca la sesión de Supabase en cada navegación y manda al login a quien

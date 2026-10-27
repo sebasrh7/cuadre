@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { PRIVACY_VERSION } from "@/lib/privacy";
 import { onboardingSchema } from "@/lib/schemas";
 
 export type OnboardingState = {
@@ -23,7 +24,18 @@ export async function saveOnboarding(
   }
 
   const input = parsed.data;
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
+
+  // La autorización se registra antes de guardar cualquier otro dato.
+  const consent = await supabase
+    .from("profiles")
+    .update({
+      privacy_accepted_at: new Date().toISOString(),
+      privacy_version: PRIVACY_VERSION,
+      ai_categorization: input.aiCategorization,
+    })
+    .eq("id", userId);
+  if (consent.error) return { error: "No pudimos guardar. Inténtalo de nuevo." };
 
   const accounts = (
     [

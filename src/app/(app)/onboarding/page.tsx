@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth";
+import { PRIVACY_VERSION } from "@/lib/privacy";
 import { OnboardingForm, type OnboardingDefaults } from "./onboarding-form";
 
 export default function OnboardingPage() {
@@ -16,7 +17,11 @@ export default function OnboardingPage() {
 async function SavedOnboarding() {
   const { supabase, userId } = await requireUser();
   const [profile, accounts, aliases] = await Promise.all([
-    supabase.from("profiles").select("worker_type, arl_risk, nit_last_digit").eq("id", userId).single(),
+    supabase
+      .from("profiles")
+      .select("worker_type, arl_risk, nit_last_digit, privacy_version, ai_categorization")
+      .eq("id", userId)
+      .single(),
     supabase.from("own_accounts").select("kind, last4"),
     supabase.from("own_aliases").select("kind, value").order("created_at"),
   ]);
@@ -34,6 +39,8 @@ async function SavedOnboarding() {
     savingsLast4: last4("savings"),
     debitCardLast4: last4("debit_card"),
     creditCardLast4: last4("credit_card"),
+    privacyAccepted: profile.data?.privacy_version === PRIVACY_VERSION,
+    aiCategorization: profile.data?.ai_categorization ?? false,
   };
 
   return <OnboardingForm defaults={defaults} />;

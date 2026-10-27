@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth";
+import { requireConsentedUser } from "@/lib/auth";
 import { UNCATEGORIZED } from "@/lib/categories/categories";
 import { formatCop } from "@/lib/money/format";
 import { loadTaxRules } from "@/lib/tax/load";
@@ -20,13 +19,7 @@ export default function HomePage() {
 }
 
 async function Dashboard() {
-  const { supabase, userId } = await requireUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("onboarded_at, arl_risk")
-    .eq("id", userId)
-    .single();
-  if (!profile?.onboarded_at) redirect("/onboarding");
+  const { supabase, profile } = await requireConsentedUser();
 
   const year = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric" }).format(new Date()));
   const [{ data: movements }, taxRules] = await Promise.all([

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth";
+import { requireConsentedUser } from "@/lib/auth";
 import { formatCop } from "@/lib/money/format";
 import { CategorizeButton, CategorySelect } from "./category-controls";
 
@@ -23,7 +23,7 @@ export default function MovementsPage() {
 }
 
 async function MovementList() {
-  const { supabase } = await requireUser();
+  const { supabase } = await requireConsentedUser();
   const { data, error } = await supabase
     .from("movements")
     .select("id, occurred_on, amount_cop, direction, kind, counterparty, category")

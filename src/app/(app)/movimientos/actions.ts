@@ -2,13 +2,13 @@
 
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireConsentedUser } from "@/lib/auth";
 import { categorizePendingExpenses, setMerchantCategory, type CategorizeSummary } from "@/lib/categories/apply";
 import { EXPENSE_CATEGORIES } from "@/lib/categories/categories";
 
 export async function categorizePending(): Promise<CategorizeSummary> {
-  const { supabase } = await requireUser();
-  const summary = await categorizePendingExpenses(supabase);
+  const { supabase, profile } = await requireConsentedUser();
+  const summary = await categorizePendingExpenses(supabase, profile.ai_categorization);
   refresh();
   return summary;
 }
@@ -21,7 +21,7 @@ const changeSchema = z.object({
 export async function changeCategory(input: z.input<typeof changeSchema>) {
   const parsed = changeSchema.safeParse(input);
   if (!parsed.success) return;
-  const { supabase } = await requireUser();
+  const { supabase } = await requireConsentedUser();
   await setMerchantCategory(supabase, parsed.data.counterparty, parsed.data.category);
   refresh();
 }

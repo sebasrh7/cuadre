@@ -62,8 +62,8 @@
 | 9 | Calculadora de seguridad social ✅ | IBC (40 %, piso 1 SMMLV, techo 25), salud, pensión y ARL del último mes, con la fórmula visible |
 | 10 | "¿Me toca declarar renta?" ✅ | Ingresos y consignaciones del año contra 1.400 UVT, con proyección; patrimonio y compras se listan para revisar a mano |
 | 11 | Alertas de fechas | Seguridad social y renta según el NIT |
-| 12 | Exportar y borrar | Excel por año; borrar cuenta y datos |
-| 13 | Base de producto real | Privacidad (Ley 1581), Sentry, analítica, botón de comentarios |
+| 12 | Exportar y borrar ✅ | CSV para Excel (UTF-8, `;`, sin inyección de fórmulas) y JSON completo; borrar cuenta con todos los datos en cascada |
+| 13 | Base de producto real | Privacidad (Ley 1581) ✅: política versionada, autorización expresa registrada, IA opcional y apagada por defecto. Pendiente: Sentry, analítica, botón de comentarios |
 
 ## 6. Fuera de alcance v1
 
