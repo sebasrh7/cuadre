@@ -67,7 +67,7 @@ export function parseBancolombiaStatement(items: TextItem[]): ParseStatementResu
   }
 
   const statement: Statement = { ...period, accountLast4, ...summary, movements };
-  const problem = verify(statement);
+  const problem = verifyStatement(statement);
   return problem ? { ok: false, problem } : { ok: true, statement };
 }
 
@@ -158,7 +158,9 @@ function readMovement(row: Row, period: { from: string; to: string }): Statement
     .map((c) => c.str)
     .join(" ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    // La fuente del extracto dibuja la ñ como "|" ("MU|OZ", "Mu|oz").
+    .replace(/(\p{L}?)\|/gu, (_, before: string) => `${before}${before && before === before.toLowerCase() ? "ñ" : "Ñ"}`);
 
   return {
     date: resolveDate(Number(date[1]), Number(date[2]), period),
@@ -179,7 +181,11 @@ function resolveDate(day: number, month: number, period: { from: string; to: str
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function verify(s: Statement): StatementProblem | null {
+/**
+ * Comprueba que el extracto cuadre consigo mismo. Se exporta para que el
+ * servidor la vuelva a correr sobre lo que envía el navegador.
+ */
+export function verifyStatement(s: Statement): StatementProblem | null {
   if (s.previousBalanceCents + s.totalCreditsCents - s.totalDebitsCents !== s.currentBalanceCents) {
     return "summary_mismatch";
   }

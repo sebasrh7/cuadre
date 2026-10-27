@@ -33,7 +33,9 @@ const EXPENSE_PREFIXES = [
 export function classifyStatementMovement(m: StatementMovement): ClassifiedMovement {
   const text = m.description.toUpperCase();
 
-  if (text.startsWith("ABONO DE GIRO INTERNACIONAL")) return { kind: "foreign_income", counterparty: null };
+  if (text.startsWith("ABONO DE GIRO INTERNACIONAL")) {
+    return { kind: "foreign_income", counterparty: "Giro internacional" };
+  }
   if (/^(ABONO|AJUSTE) INTERES/.test(text)) return { kind: "interest", counterparty: null };
   if (/^TRANSFERENCIAS? A NEQUI/.test(text)) return { kind: "wallet_transfer", counterparty: "Nequi" };
 

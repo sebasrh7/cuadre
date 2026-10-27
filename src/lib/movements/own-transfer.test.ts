@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as fx from "@/lib/parsers/__fixtures__/bancolombia-alerts";
 import { parseBancolombiaAlert, type BancolombiaAlert } from "@/lib/parsers/bancolombia-alert";
-import { isOwnTransfer, type OwnIdentity } from "./own-transfer";
+import { isOwnTransfer, matchesOwnName, type OwnIdentity } from "./own-transfer";
 
 const own: OwnIdentity = {
   names: ["Andrés Prueba Ejemplo"],
@@ -43,5 +43,18 @@ describe("isOwnTransfer", () => {
 
   it("una compra nunca es transferencia propia", () => {
     expect(isOwnTransfer(parse(fx.cardPurchaseSnippet), own)).toBe(false);
+  });
+});
+
+describe("matchesOwnName", () => {
+  const ownNames = ["Andrés Prueba Ejemplo"];
+
+  it.each([
+    ["ANDRES PRUEBA EJEMPLO", true],
+    ["Andres Prueb", true], // cortado por el extracto
+    ["ANDRES PRUEBA OTRO", false],
+    ["ANDRES", false], // demasiado corto para afirmar que es la misma persona
+  ])("%s → %s", (name, expected) => {
+    expect(matchesOwnName(name, ownNames)).toBe(expected);
   });
 });

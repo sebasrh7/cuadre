@@ -12,7 +12,7 @@ const movement = (description: string, amountCents: number): StatementMovement =
 
 describe("classifyStatementMovement", () => {
   it.each([
-    ["ABONO DE GIRO INTERNACIONAL", 385_000_000, "foreign_income", null],
+    ["ABONO DE GIRO INTERNACIONAL", 385_000_000, "foreign_income", "Giro internacional"],
     ["ABONO INTERESES AHORROS", 45, "interest", null],
     ["AJUSTE INTERES AHORROS DB", -12, "interest", null],
     ["TRANSFERENCIAS A NEQUI", -20_000_000, "wallet_transfer", "Nequi"],

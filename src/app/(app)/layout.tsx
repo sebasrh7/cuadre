@@ -5,10 +5,11 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1 flex-col">
       <header className="border-b border-border">
-        <nav className="mx-auto flex w-full max-w-3xl items-center gap-4 px-4 py-3 text-sm">
+        <nav className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
           <Link href="/inicio" className="text-base font-semibold">
             Cuadre
           </Link>
+          <Link href="/movimientos">Movimientos</Link>
           <Link href="/ingresos">Ingresos USD</Link>
           <Link href="/onboarding">Mis cuentas</Link>
           <form action={logout} className="ml-auto">

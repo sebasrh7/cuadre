@@ -36,6 +36,17 @@ describe("parseBancolombiaStatement", () => {
     expect(parse().movements[4].description).toBe("TRANSFERENCIAS A NEQUI");
   });
 
+  it("repara la ñ que la fuente del extracto dibuja como |", () => {
+    const rows = fx.movements.map((m, i) =>
+      i === 3 ? { ...m, description: [[79, "TRANSF A Ana"], [170, "Mu|oz"]] as fx.FixtureMovement["description"] } : m,
+    );
+    expect(parse(fx.buildStatement({ rows })).movements[3].description).toBe("TRANSF A Ana Muñoz");
+    const upper = fx.movements.map((m, i) =>
+      i === 3 ? { ...m, description: [[79, "TRANSF A MARIA"], [170, "MU|OZ"]] as fx.FixtureMovement["description"] } : m,
+    );
+    expect(parse(fx.buildStatement({ rows: upper })).movements[3].description).toBe("TRANSF A MARIA MUÑOZ");
+  });
+
   it("asigna el año siguiente a los meses de enero de un periodo que cruza de año", () => {
     const dates = parse().movements.map((m) => m.date);
     expect(dates[4]).toBe("2026-12-20");

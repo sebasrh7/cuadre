@@ -92,7 +92,6 @@ async function main() {
   const pdf = await getDocument({
     data,
     password: password || undefined,
-    isEvalSupported: false,
     standardFontDataUrl,
   }).promise;
 

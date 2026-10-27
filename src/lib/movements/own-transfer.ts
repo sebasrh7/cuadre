@@ -32,13 +32,26 @@ function isOwnName(name: string, own: OwnIdentity): boolean {
   return own.names.some((ownName) => normalizeName(ownName) === normalizeName(name));
 }
 
+/**
+ * El extracto corta los nombres a ~12 caracteres ("SEBASTIAN RE"): un nombre
+ * cortado es propio si es el comienzo de un nombre propio. Se exige un mínimo
+ * de largo para que "ANA" no coincida con "ANA MARÍA …" por accidente.
+ */
+export function matchesOwnName(name: string, ownNames: string[]): boolean {
+  const candidate = normalizeName(name);
+  return ownNames.some((own) => {
+    const full = normalizeName(own);
+    return full === candidate || (candidate.length >= 8 && full.startsWith(candidate));
+  });
+}
+
 /** Las llaves llegan con mayúsculas inconsistentes (`@abc123` y `@ABC123`). */
 function normalizeKey(key: string): string {
   return key.trim().toLowerCase();
 }
 
 /** Ignora mayúsculas, tildes y espacios repetidos. */
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
