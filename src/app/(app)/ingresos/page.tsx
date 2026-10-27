@@ -9,10 +9,10 @@ export default function IncomesPage() {
   return (
     <>
       <div>
-        <h1 className="text-2xl font-semibold">Ingresos en USD</h1>
+        <h1 className="text-2xl font-semibold">Monto en USD (opcional)</h1>
         <p className="text-sm text-muted">
-          Registra cada pago del exterior. Si anotas cuánto te llegó en pesos, calculamos la tasa
-          que realmente recibiste.
+          Solo si sabes cuántos dólares te pagaron. Tus ingresos en pesos ya salen del extracto; con
+          el monto en USD calculamos la tasa a la que recibiste cada pago.
         </p>
       </div>
       <Suspense fallback={<p className="text-muted">Cargando…</p>}>

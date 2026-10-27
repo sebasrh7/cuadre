@@ -209,6 +209,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_rules: {
+        Row: {
+          key: string
+          norm: string
+          source_url: string
+          unit: string
+          value: number
+          verified_on: string
+          year: number
+        }
+        Insert: {
+          key: string
+          norm: string
+          source_url: string
+          unit: string
+          value: number
+          verified_on: string
+          year: number
+        }
+        Update: {
+          key?: string
+          norm?: string
+          source_url?: string
+          unit?: string
+          value?: number
+          verified_on?: string
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

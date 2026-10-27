@@ -37,7 +37,7 @@
 | 1 | **Extracto mensual Bancolombia (PDF)** | Se sube y se lee **en el navegador** con la contraseña del usuario; el PDF nunca sale del dispositivo, al servidor solo llegan los movimientos extraídos | v1 |
 | 2 | **Alertas de Bancolombia** | Pegar el texto o compartirlo desde el celular (Web Share Target). Parser con regex, sin IA | v1 — **parser hecho** |
 | 3 | **Facturas electrónicas DIAN (ZIP/XML)** | Arrastrar el archivo. Aporta NIT, razón social y soporte del gasto | v1 |
-| 4 | **Ingresos en USD** | El usuario registra el monto en USD; la app lo concilia con el `ABONO DE GIRO INTERNACIONAL` del extracto y calcula la tasa efectiva y la pérdida cambiaria | v1 |
+| 4 | **Ingresos en USD (opcional)** | Solo para quien conoce el monto en USD: se concilia con el `ABONO DE GIRO INTERNACIONAL` y da la tasa efectiva. El usuario de referencia cobra un monto fijo en pesos y no conoce los dólares, así que los ingresos salen del extracto en COP | v1 |
 | 5 | Nequi, Nu débito, Nu crédito | Extractos o exportaciones de cada entidad; formatos por revisar | v2 |
 | 6 | Importación automática desde Gmail | OAuth con Gmail (`gmail.readonly` es *scope* restringido: verificación de Google en producción; en modo testing alcanza para ≤100 usuarios) | v2 |
 
@@ -56,11 +56,11 @@
 | 3 | Importar extracto Bancolombia | PDF + contraseña, procesado en el navegador; vista previa antes de guardar |
 | 4 | Pegar/compartir alertas | Parser de las 4 plantillas; deduplicación |
 | 5 | Facturas DIAN | ZIP/XML → gasto enriquecido con NIT y soporte |
-| 6 | **Ingresos en USD y pérdida cambiaria** | Monto en USD + abono en COP del extracto + TRM oficial del día → tasa efectiva y costo de recibir el pago, por mes y por año |
+| 6 | Ingresos en USD y pérdida cambiaria (opcional, baja prioridad) | Solo si el usuario conoce el monto en USD. Quien cobra un monto fijo en pesos no puede ver ni controlar la conversión |
 | 7 | Categorización de gastos (IA) | Comercio nuevo → Gemini propone categoría → caché por comercio normalizado; el usuario puede corregir |
 | 8 | Panel mensual y anual | Ingresos (USD y COP), gastos por categoría, pérdida cambiaria, comparación entre meses |
-| 9 | Calculadora de seguridad social | IBC y aportes estimados con la fórmula visible |
-| 10 | "¿Me toca declarar renta?" | Semáforo por topes en UVT del año |
+| 9 | Calculadora de seguridad social ✅ | IBC (40 %, piso 1 SMMLV, techo 25), salud, pensión y ARL del último mes, con la fórmula visible |
+| 10 | "¿Me toca declarar renta?" ✅ | Ingresos y consignaciones del año contra 1.400 UVT, con proyección; patrimonio y compras se listan para revisar a mano |
 | 11 | Alertas de fechas | Seguridad social y renta según el NIT |
 | 12 | Exportar y borrar | Excel por año; borrar cuenta y datos |
 | 13 | Base de producto real | Privacidad (Ley 1581), Sentry, analítica, botón de comentarios |
@@ -106,7 +106,7 @@ Usuarios activos al mes · retención del mes 2 · % de movimientos que entran p
 |---|---|
 | **0** ✅ | Revisión del correo, hallazgos (sección 3), proyecto Next.js, parser de alertas con tests |
 | **1** | Supabase (esquema + RLS) ✅, autenticación ✅, onboarding con cuentas propias ✅, ingreso manual en USD ✅ (código listo; falta conectar el proyecto remoto). Primer despliegue en Vercel |
-| **2** | Importar extracto PDF en el navegador (necesita un extracto anonimizado como referencia), conciliación con alertas, transferencias propias |
+| **2** | Importar extracto PDF en el navegador ✅, transferencias propias ✅, ingresos en COP ✅, seguridad social y renta ✅ (adelantados de la semana 4). Pendiente: conciliación con alertas |
 | **3** | Facturas DIAN, TRM y pérdida cambiaria, categorización con Gemini, panel |
 | **4** | Seguridad social, semáforo de renta, alertas de fechas, exportar/borrar, privacidad, PWA, README. **Lanzamiento a 10-20 personas** |
 
