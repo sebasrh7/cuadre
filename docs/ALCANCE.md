@@ -51,7 +51,7 @@
 
 | # | Funcionalidad | Detalle |
 |---|---|---|
-| 1 | Autenticación | Enlace mágico (Supabase Auth) ✅; Google OAuth después. El plan gratuito no deja cambiar la plantilla del correo integrado (por eso no hay código de 6 dígitos) y limita los envíos por hora: antes del lanzamiento, SMTP con Resend |
+| 1 | Autenticación | Código de 6 dígitos por correo (Supabase Auth + SMTP de Gmail, gratis) ✅; Google OAuth después. Resend cuando haya dominio propio |
 | 2 | Onboarding (≤2 min) | Tipo de independiente, riesgo ARL, últimos dígitos del NIT/cédula, **cuentas, llaves y nombres propios** (para detectar transferencias propias) |
 | 3 | Importar extracto Bancolombia | PDF + contraseña, procesado en el navegador; vista previa antes de guardar |
 | 4 | Pegar/compartir alertas | Parser de las 4 plantillas; deduplicación |
