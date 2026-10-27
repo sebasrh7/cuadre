@@ -11,7 +11,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "db:types": "supabase gen types typescript --linked > src/lib/supabase/database.types.ts",
     "db:push": "supabase db push --linked",
-    "anonimizar-extracto": "node scripts/anonimizar-extracto.mjs"
+    "anonimizar-extracto": "node scripts/anonimizar-extracto.mjs",
+    "db:config": "node scripts/config-push.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

@@ -12,6 +12,7 @@ Next.js 16 (App Router) + TypeScript estricto · Supabase (Postgres, RLS, Auth, 
 - `npm run typecheck` — genera los tipos de rutas de Next y corre `tsc`
 - `npm run lint`
 - `npm run db:push` — aplica `supabase/migrations` al proyecto enlazado
+- `npm run db:config` — muestra los cambios de `supabase/config.toml` (con `-- --yes` los aplica); lee los secretos de `.env.local`
 - `npm run db:types` — regenera `src/lib/supabase/database.types.ts` desde el proyecto enlazado
 - `npm run anonimizar-extracto -- "ruta.pdf"` — lo corre el usuario en su terminal; nunca con PDFs reales dentro del repo
 
