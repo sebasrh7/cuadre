@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCopAmount } from "./amount";
+import { parseCopAmount, parseMinorAmount } from "./amount";
 
 describe("parseCopAmount", () => {
   it.each([
@@ -22,5 +22,22 @@ describe("parseCopAmount", () => {
 
   it.each(["", "$", "abc", "$12a00"])("rechaza %j", (raw) => {
     expect(() => parseCopAmount(raw)).toThrow("Monto no reconocido");
+  });
+});
+
+describe("parseMinorAmount", () => {
+  it.each([
+    ["1500", 150_000],
+    ["1.500,50", 150_050],
+    ["1,500.50", 150_050],
+    ["1500.5", 150_050],
+    ["0,99", 99],
+    ["$ 2,000", 200_000],
+  ])("lee %s como %i centavos", (raw, expected) => {
+    expect(parseMinorAmount(raw)).toBe(expected);
+  });
+
+  it.each(["", "abc", "12,3,4a"])("rechaza %j", (raw) => {
+    expect(() => parseMinorAmount(raw)).toThrow("Monto no reconocido");
   });
 });

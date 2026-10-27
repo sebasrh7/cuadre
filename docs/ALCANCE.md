@@ -51,7 +51,7 @@
 
 | # | Funcionalidad | Detalle |
 |---|---|---|
-| 1 | Autenticación | Google OAuth + enlace mágico (Supabase Auth) |
+| 1 | Autenticación | Enlace mágico (Supabase Auth) ✅; Google OAuth después. El plan gratuito no deja cambiar la plantilla del correo integrado (por eso no hay código de 6 dígitos) y limita los envíos por hora: antes del lanzamiento, SMTP con Resend |
 | 2 | Onboarding (≤2 min) | Tipo de independiente, riesgo ARL, últimos dígitos del NIT/cédula, **cuentas, llaves y nombres propios** (para detectar transferencias propias) |
 | 3 | Importar extracto Bancolombia | PDF + contraseña, procesado en el navegador; vista previa antes de guardar |
 | 4 | Pegar/compartir alertas | Parser de las 4 plantillas; deduplicación |
@@ -105,7 +105,7 @@ Usuarios activos al mes · retención del mes 2 · % de movimientos que entran p
 | Semana | Entregable |
 |---|---|
 | **0** ✅ | Revisión del correo, hallazgos (sección 3), proyecto Next.js, parser de alertas con tests |
-| **1** | Supabase (esquema + RLS), autenticación, onboarding con cuentas propias, ingreso manual en USD. Primer despliegue en Vercel |
+| **1** | Supabase (esquema + RLS) ✅, autenticación ✅, onboarding con cuentas propias ✅, ingreso manual en USD ✅ (código listo; falta conectar el proyecto remoto). Primer despliegue en Vercel |
 | **2** | Importar extracto PDF en el navegador (necesita un extracto anonimizado como referencia), conciliación con alertas, transferencias propias |
 | **3** | Facturas DIAN, TRM y pérdida cambiaria, categorización con Gemini, panel |
 | **4** | Seguridad social, semáforo de renta, alertas de fechas, exportar/borrar, privacidad, PWA, README. **Lanzamiento a 10-20 personas** |

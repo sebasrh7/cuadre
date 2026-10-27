@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cuadre
 
-## Getting Started
+Copiloto financiero para independientes en Colombia: ingresos en USD con su tasa efectiva, gastos desde las alertas y el extracto de Bancolombia, y detección de transferencias entre cuentas propias.
 
-First, run the development server:
+Alcance y plan: [`docs/ALCANCE.md`](docs/ALCANCE.md).
+
+## Desarrollo
+
+Requiere Node 22.13+.
 
 ```bash
+npm install
+cp .env.example .env.local   # llena las llaves de Supabase
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Comando | Qué hace |
+|---|---|
+| `npm test` | Tests (Vitest) |
+| `npm run typecheck` | Tipos de rutas de Next + `tsc` |
+| `npm run lint` | ESLint |
+| `npm run db:push` | Aplica las migraciones al proyecto de Supabase enlazado |
+| `npm run db:types` | Regenera los tipos de la base de datos |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Privacidad
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- El extracto PDF se lee en el navegador; el archivo y su contraseña no salen del dispositivo.
+- Solo se guardan los últimos 4 dígitos de cuentas y tarjetas.
+- Todas las tablas con datos de usuario tienen Row Level Security.
