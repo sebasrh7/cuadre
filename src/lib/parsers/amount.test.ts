@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCopAmount, parseMinorAmount } from "./amount";
+import { centsToPesos, parseCopAmount, parseMinorAmount, parseStatementCents } from "./amount";
 
 describe("parseCopAmount", () => {
   it.each([
@@ -39,5 +39,36 @@ describe("parseMinorAmount", () => {
 
   it.each(["", "abc", "12,3,4a"])("rechaza %j", (raw) => {
     expect(() => parseMinorAmount(raw)).toThrow("Monto no reconocido");
+  });
+});
+
+describe("parseStatementCents", () => {
+  it.each([
+    ["999,999.99", 99_999_999],
+    ["-45,900.00", -4_590_000],
+    ["1,234,567.89", 123_456_789],
+    ["-9,999.99", -999_999],
+    ["12.34", 1_234],
+    [".45", 45],
+    ["-.12", -12],
+    ["0.00", 0],
+  ])("lee %s como %i centavos", (raw, expected) => {
+    expect(parseStatementCents(raw)).toBe(expected);
+  });
+
+  it.each(["", "999,99.00", "1.234,56", "$45.00", "45", "45.5", "--1.00"])("rechaza %j", (raw) => {
+    expect(() => parseStatementCents(raw)).toThrow("Monto no reconocido");
+  });
+});
+
+describe("centsToPesos", () => {
+  it.each([
+    [150, 2],
+    [149, 1],
+    [-150, -2],
+    [45, 0],
+    [0, 0],
+  ])("%i centavos → %i pesos", (cents, pesos) => {
+    expect(centsToPesos(cents)).toBe(pesos);
   });
 });

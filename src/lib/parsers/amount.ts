@@ -25,6 +25,30 @@ export function parseMinorAmount(raw: string): number {
   return minor;
 }
 
+/**
+ * Monto del extracto de Bancolombia → centavos con signo. El extracto usa
+ * formato estadounidense (`-99,999.99`) y omite el cero inicial (`.45`, `-.12`).
+ * Se devuelven centavos y no pesos para poder sumar los intereses diarios
+ * antes de redondear.
+ */
+export function parseStatementCents(raw: string): number {
+  const match = /^(-)?(\d{1,3}(?:,\d{3})*)?\.(\d{2})$/.exec(raw.trim());
+  if (!match) {
+    throw new Error(`Monto no reconocido: "${raw}"`);
+  }
+  const [, sign, integerPart = "0", cents] = match;
+  const value = Number(integerPart.replace(/,/g, "")) * 100 + Number(cents);
+  if (!Number.isSafeInteger(value)) {
+    throw new Error(`Monto no reconocido: "${raw}"`);
+  }
+  return sign ? -value : value;
+}
+
+/** Centavos → pesos enteros, redondeando la mitad hacia arriba en valor absoluto. */
+export function centsToPesos(cents: number): number {
+  return Math.sign(cents) * Math.round(Math.abs(cents) / 100);
+}
+
 function splitAmount(raw: string): { units: number; cents: number } {
   const cleaned = raw.replace(/[$\s]/g, "");
   const match = /^(\d[\d.,]*?)(?:[.,](\d{1,2}))?$/.exec(cleaned);
