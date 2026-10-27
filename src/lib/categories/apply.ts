@@ -12,6 +12,8 @@ const DAILY_AI_LIMIT = 20;
 export interface CategorizeSummary {
   categorized: number;
   pending: number;
+  /** Gastos que parecen pagos a personas: los categoriza el usuario. */
+  personal: number;
   aiCalls: number;
   aiAvailable: boolean;
 }
@@ -26,7 +28,7 @@ export async function categorizePendingExpenses(supabase: Supabase): Promise<Cat
     .is("category", null)
     .not("counterparty", "is", null);
 
-  if (!movements?.length) return { categorized: 0, pending: 0, aiCalls: 0, aiAvailable: provider !== null };
+  if (!movements?.length) return { categorized: 0, pending: 0, personal: 0, aiCalls: 0, aiAvailable: provider !== null };
 
   const withKey = movements.map((m) => ({ id: m.id, key: merchantKey(m.counterparty!) })).filter((m) => m.key);
   const keys = [...new Set(withKey.map((m) => m.key))];
@@ -65,9 +67,11 @@ export async function categorizePendingExpenses(supabase: Supabase): Promise<Cat
     if (!error) categorized += ids.length;
   }
 
+  const personalKeys = new Set(result.personal);
   return {
     categorized,
     pending: withKey.length - categorized,
+    personal: withKey.filter((m) => personalKeys.has(m.key)).length,
     aiCalls: result.aiCalls,
     aiAvailable: provider !== null,
   };

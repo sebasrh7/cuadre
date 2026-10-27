@@ -30,6 +30,8 @@ export interface CategorizeResult {
   aiCalls: number;
   /** Comercios que quedaron sin categoría (sin IA, sin cupo o la IA no supo). */
   pending: string[];
+  /** Parte de `pending` que parece nombre de persona y no se envió a la IA. */
+  personal: string[];
 }
 
 /**
@@ -92,5 +94,5 @@ export async function categorizeMerchants(input: CategorizeInput): Promise<Categ
     }
   }
 
-  return { resolved, learned, aiCalls, pending };
+  return { resolved, learned, aiCalls, pending, personal: private_ };
 }

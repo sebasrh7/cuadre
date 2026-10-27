@@ -108,6 +108,7 @@ describe("categorizeMerchants", () => {
     });
     expect(provider.calls).toEqual([["ROYAL FILMS"]]);
     expect(result.pending).toEqual(["PEDRO PRUEBA PI A"]);
+    expect(result.personal).toEqual(["PEDRO PRUEBA PI A"]);
   });
 
   it("si la IA falla, los comercios quedan pendientes", async () => {
