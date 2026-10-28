@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const path = request.nextUrl.pathname;
   // El calendario lo pide Google Calendar sin sesión; se protege con su token.
-  const isPublic = PUBLIC_PATHS.includes(path) || path.startsWith("/calendario/");
+  const isPublic = PUBLIC_PATHS.includes(path) || path.startsWith("/calendario/") || path === "/demo";
 
   if (!data?.claims && !isPublic) {
     const url = request.nextUrl.clone();
