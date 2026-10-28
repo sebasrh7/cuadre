@@ -11,9 +11,14 @@ export default function MovementsPage() {
     <>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">Movimientos</h1>
-        <Link href="/importar" className="text-sm text-accent underline">
-          Importar extracto
-        </Link>
+        <div className="flex gap-4 text-sm">
+          <Link href="/alertas" className="text-accent underline">
+            Pegar alertas
+          </Link>
+          <Link href="/importar" className="text-accent underline">
+            Importar extracto
+          </Link>
+        </div>
       </div>
       <Suspense fallback={<p className="text-muted">Cargando…</p>}>
         <MovementList />
@@ -26,7 +31,7 @@ async function MovementList() {
   const { supabase } = await requireConsentedUser();
   const { data, error } = await supabase
     .from("movements")
-    .select("id, occurred_on, amount_cop, direction, kind, counterparty, category")
+    .select("id, occurred_on, amount_cop, direction, kind, counterparty, category, source")
     .order("occurred_on", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(500);
@@ -74,6 +79,14 @@ async function MovementList() {
                   </span>
                   <span className="col-span-2 flex min-w-0 items-center gap-2 text-xs sm:col-span-1">
                     <span className="text-muted tabular-nums sm:hidden">Día {Number(m.occurred_on.slice(8))} ·</span>
+                    {m.source === "alert" && (
+                      <span
+                        title="Vino de una alerta: se reemplaza cuando importes el extracto de este periodo"
+                        className="rounded border border-border px-1 text-muted"
+                      >
+                        alerta
+                      </span>
+                    )}
                     {m.kind === "expense" && m.counterparty ? (
                       // La key lo vuelve a montar cuando la categoría cambia en el servidor.
                       <CategorySelect key={m.category ?? ""} counterparty={m.counterparty} category={m.category} />

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as fx from "./__fixtures__/bancolombia-alerts";
-import { parseBancolombiaAlert } from "./bancolombia-alert";
+import { parseBancolombiaAlert, parseBancolombiaAlerts } from "./bancolombia-alert";
 
 describe("parseBancolombiaAlert", () => {
   it("lee una compra con débito desde el cuerpo completo del correo", () => {
@@ -94,5 +94,20 @@ describe("parseBancolombiaAlert", () => {
       ok: false,
       reason: "unrecognized",
     });
+  });
+});
+
+describe("parseBancolombiaAlerts", () => {
+  it("lee varias alertas pegadas juntas, en orden", () => {
+    const pasted = [fx.cardPurchaseSnippet, fx.transferOutAccount, fx.unrelatedBankEmail, fx.transferIn].join("\n\n");
+    expect(parseBancolombiaAlerts(pasted).map((a) => a.kind)).toEqual([
+      "card_purchase",
+      "transfer_out_account",
+      "transfer_in",
+    ]);
+  });
+
+  it("devuelve una lista vacía si no hay alertas", () => {
+    expect(parseBancolombiaAlerts(fx.unrelatedBankEmail)).toEqual([]);
   });
 });

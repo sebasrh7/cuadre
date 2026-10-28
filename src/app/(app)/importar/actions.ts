@@ -9,6 +9,7 @@ import {
   planStatementImport,
   reconcileForeignIncomes,
 } from "@/lib/movements/statement-import";
+import { replaceAlertsWithStatement } from "@/lib/movements/load";
 import { verifyStatement } from "@/lib/parsers/bancolombia-statement";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -43,7 +44,15 @@ const importSchema = z.object({
 export type ImportInput = z.input<typeof importSchema>;
 
 export type ImportResult =
-  | { ok: true; inserted: number; duplicates: number; linkedIncomes: number; categorized: number; uncategorized: number }
+  | {
+      ok: true;
+      inserted: number;
+      duplicates: number;
+      replacedAlerts: number;
+      linkedIncomes: number;
+      categorized: number;
+      uncategorized: number;
+    }
   | { ok: false; error: string };
 
 export async function importStatement(input: ImportInput): Promise<ImportResult> {
@@ -85,6 +94,8 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
       { onConflict: "user_id,institution,kind,last4", ignoreDuplicates: true },
     );
 
+  // Las alertas del periodo ya están en el extracto: se reemplazan para no contarlas dos veces.
+  const replacedAlerts = await replaceAlertsWithStatement(supabase, statement.from, statement.to);
   const linkedIncomes = await linkForeignIncomes(supabase, statement.from, statement.to);
   // Si la categorización falla, los movimientos ya quedaron guardados: se reintenta desde /movimientos.
   const categories = await categorizePendingExpenses(supabase, profile.ai_categorization).catch(() => null);
@@ -93,6 +104,7 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
     ok: true,
     inserted: inserted?.length ?? 0,
     duplicates: rows.length - (inserted?.length ?? 0),
+    replacedAlerts,
     linkedIncomes,
     categorized: categories?.categorized ?? 0,
     uncategorized: categories?.pending ?? 0,
