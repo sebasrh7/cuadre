@@ -65,14 +65,15 @@ npm run dev
 
 | Comando | Qué hace |
 |---|---|
-| `npm test` | Tests (Vitest) |
+| `npm test` | Tests unitarios (Vitest) |
+| `npm run e2e` | Tests de punta a punta (Playwright) contra Supabase local: requiere Docker y `npx supabase start` |
 | `npm run typecheck` | Tipos de rutas de Next + `tsc` |
 | `npm run lint` | ESLint |
 | `npm run db:push` | Aplica las migraciones al proyecto de Supabase enlazado |
 | `npm run db:config` | Sube `supabase/config.toml` leyendo los secretos de `.env.local` |
 | `npm run db:types` | Regenera los tipos de la base de datos |
 
-GitHub Actions corre lint, tipos, tests y build en cada push.
+GitHub Actions corre lint, tipos, tests unitarios y build en cada push, y en otro job levanta un Supabase local con todas las migraciones para correr los tests de punta a punta (onboarding, importar un extracto sintético, reimportar sin duplicar, exportar y borrar la cuenta).
 
 ## Aviso
 

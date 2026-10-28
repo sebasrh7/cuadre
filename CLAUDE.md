@@ -8,7 +8,8 @@ Copiloto financiero para independientes en Colombia. Alcance completo en `docs/A
 Next.js 16 (App Router) + TypeScript estricto · Supabase (Postgres, RLS, Auth, Storage) · Tailwind + shadcn/ui · Zod · Vitest + Playwright · Vercel.
 
 ## Comandos
-- `npm test` — tests (Vitest)
+- `npm test` — tests unitarios (Vitest)
+- `npm run e2e` — Playwright contra Supabase local (Docker). Corre en el CI; el login por correo solo se habilita en ese Supabase local
 - `npm run typecheck` — genera los tipos de rutas de Next y corre `tsc`
 - `npm run lint`
 - `npm run db:push` — aplica `supabase/migrations` al proyecto enlazado
