@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { InstallApp } from "@/components/install-app";
 import { requireUser } from "@/lib/auth";
 import { AiToggle, DeleteAccountForm } from "./account-controls";
 
@@ -38,6 +39,15 @@ async function Account() {
             Editar mis datos y cuentas
           </Link>
         </p>
+      </Card>
+
+      <Card title="App en el celular">
+        <p className="text-muted">
+          Instálala para abrirla como cualquier app y, en Android, compartirle alertas desde el correo o los mensajes.
+          Si no ves el botón, ya está instalada o tu navegador no lo permite: búscala en el menú del navegador como
+          «Instalar app» o «Agregar a la pantalla principal».
+        </p>
+        <InstallApp />
       </Card>
 
       <Card title="Categorías con IA">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallApp } from "@/components/install-app";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
       >
         Ingresar
       </Link>
+      <InstallApp />
       <Link href="/privacidad" className="text-xs text-muted underline">
         Política de tratamiento de datos
       </Link>
