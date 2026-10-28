@@ -64,9 +64,9 @@ export default function PrivacyPage() {
             <strong>Vercel</strong>: aloja la aplicación; las funciones corren en São Paulo, Brasil.
           </li>
           <li>
-            <strong>Sentry</strong> (Estados Unidos): registro de errores técnicos para corregir fallas. Recibe el tipo
-            de error, el navegador y la página, pero no tus movimientos, montos, correo, cookies ni el contenido de lo
-            que envías.
+            <strong>Sentry</strong> (Estados Unidos): registro de errores técnicos y tiempos de carga para corregir
+            fallas. Recibe el tipo de error, el navegador, la página y cuánto tardó, pero no tus movimientos, montos,
+            correo, cookies ni el contenido de lo que envías.
           </li>
           <li>
             <strong>Google</strong>: inicio de sesión. Y, <strong>solo si lo activas</strong>, Gemini para sugerir la
