@@ -1,0 +1,21 @@
+name: Error
+description: Algo no funciona como debería
+labels: [error]
+body:
+  - type: textarea
+    id: que-paso
+    attributes:
+      label: Qué pasó
+      description: Qué hiciste, qué esperabas y qué pasó. No pegues datos de cuentas ni extractos.
+    validations:
+      required: true
+  - type: input
+    id: pagina
+    attributes:
+      label: Página
+      placeholder: /importar
+  - type: dropdown
+    id: dispositivo
+    attributes:
+      label: Dispositivo
+      options: [Computador, Celular Android, iPhone]

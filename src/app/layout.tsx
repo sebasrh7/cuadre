@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,9 +12,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+};
+
 export const metadata: Metadata = {
+  appleWebApp: { title: "Cuadre", statusBarStyle: "default" },
   title: "Cuadre",
-  description: "Tus finanzas de independiente en Colombia, cuadradas: ingresos en USD, gastos y seguridad social.",
+  description:
+    "Tus finanzas de independiente en Colombia, cuadradas: ingresos, gastos, seguridad social y renta desde tu extracto.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -18,6 +18,11 @@ Next.js 16 (App Router) + TypeScript estricto · Supabase (Postgres, RLS, Auth, 
 
 Node 22.13 o superior (pdf.js lo exige). GitHub Actions corre lint, tipos, tests y build en cada push (`.github/workflows/ci.yml`).
 
+## Flujo de trabajo
+- Nada se sube directo a `main`: cada cambio va en una rama (`feat/…`, `fix/…`) con su Pull Request.
+- El CI debe pasar y Vercel crea una vista previa por PR; se fusiona con *squash*.
+- Métricas del producto: `select * from analytics.resumen;` en el editor SQL de Supabase (esquema no expuesto por la API).
+
 ## Next 16 en este proyecto
 - `cacheComponents` está activo: todo lo que lea la sesión va dentro de `<Suspense>`; los datos del usuario no se cachean en el servidor.
 - `src/proxy.ts` (antes `middleware`) refresca la sesión; la autorización real es RLS + `requireUser()` en `src/lib/auth.ts`.
