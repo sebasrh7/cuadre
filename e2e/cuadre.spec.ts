@@ -21,7 +21,8 @@ test.describe("sin sesión", () => {
 });
 
 test.describe("flujo completo de un usuario", () => {
-  test.describe.configure({ mode: "serial" });
+  // Comparten un usuario y cada test depende del anterior: reintentar a mitad de camino no tiene sentido.
+  test.describe.configure({ mode: "serial", retries: 0 });
   test.use({ storageState: STORAGE_STATE });
 
   const statement = async () => ({
@@ -51,7 +52,7 @@ test.describe("flujo completo de un usuario", () => {
       .getByLabel("Alertas")
       .fill("Bancolombia: Compraste $45.900,00 en TIENDA EJEMPLO con tu T.Deb *1111, el 05/12/2026 a las 10:00. Si tienes dudas…");
     await page.getByRole("button", { name: "Leer alertas" }).click();
-    await expect(page.getByText("TIENDA EJEMPLO")).toBeVisible();
+    await expect(page.getByRole("listitem").getByText("TIENDA EJEMPLO")).toBeVisible();
     await page.getByRole("button", { name: "Guardar 1 alerta" }).click();
     await expect(page.getByText("1 movimiento nuevo")).toBeVisible();
 
