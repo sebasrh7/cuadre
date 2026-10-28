@@ -11,7 +11,8 @@ export default function AlertsPage() {
         <p className="text-sm text-muted">
           Copia las alertas de Bancolombia (correo o SMS de compras y transferencias) y pégalas aquí, una o varias a la
           vez. Así ves los gastos del mes antes de que llegue el extracto. Se leen en tu navegador: el texto no se
-          envía.
+          envía. En Android, con Cuadre instalada, también puedes usar Compartir → Cuadre desde el correo o los
+          mensajes.
         </p>
       </div>
       <Suspense fallback={<p className="text-muted">Cargando…</p>}>

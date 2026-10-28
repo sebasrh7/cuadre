@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button, FormError } from "@/components/ui";
 import { isOwnTransfer, type OwnIdentity } from "@/lib/movements/own-transfer";
 import { formatCop } from "@/lib/money/format";
 import { parseBancolombiaAlerts, type BancolombiaAlert } from "@/lib/parsers/bancolombia-alert";
+import { takeSharedText } from "@/lib/shared-text";
 import { saveAlerts, type SaveAlertsResult } from "./actions";
 
 const LABELS: Record<BancolombiaAlert["kind"], string> = {
@@ -27,23 +28,44 @@ function describe(alert: BancolombiaAlert): string {
   }
 }
 
+const NOT_FOUND = "No encontramos alertas de compras o transferencias de Bancolombia en ese texto.";
+
 export function AlertPaster({ own }: { own: OwnIdentity }) {
   const [text, setText] = useState("");
   const [alerts, setAlerts] = useState<BancolombiaAlert[] | null>(null);
   const [result, setResult] = useState<Extract<SaveAlertsResult, { ok: true }>>();
   const [error, setError] = useState<string>();
   const [saving, start] = useTransition();
+  const [notice, setNotice] = useState<string>();
 
-  function read() {
-    setError(undefined);
-    const found = parseBancolombiaAlerts(text);
-    if (!found.length) {
-      setAlerts(null);
-      setError("No encontramos alertas de compras o transferencias de Bancolombia en ese texto.");
-      return;
-    }
-    setAlerts(found);
+  function show(source: string) {
+    const found = parseBancolombiaAlerts(source);
+    setAlerts(found.length ? found : null);
+    setError(found.length ? undefined : NOT_FOUND);
   }
+
+  // Llegada desde "Compartir → Cuadre": el service worker dejó el texto en este dispositivo.
+  useEffect(() => {
+    const shared = new URLSearchParams(window.location.search).get("compartido");
+    if (!shared) return;
+    window.history.replaceState(null, "", "/alertas");
+    let cancelled = false;
+    (async () => {
+      const received = await (shared === "sin-sw" ? Promise.resolve(null) : takeSharedText());
+      if (cancelled) return;
+      if (!received) {
+        setNotice("No pudimos recibir lo que compartiste. Cópialo y pégalo aquí.");
+        return;
+      }
+      setText(received);
+      const found = parseBancolombiaAlerts(received);
+      setAlerts(found.length ? found : null);
+      setError(found.length ? undefined : NOT_FOUND);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function save() {
     if (!alerts) return;
@@ -96,9 +118,16 @@ export function AlertPaster({ own }: { own: OwnIdentity }) {
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-base"
         />
       </label>
+      {notice && <p className="text-sm text-muted">{notice}</p>}
       <FormError message={error} />
       {!alerts && (
-        <Button onClick={read} disabled={!text.trim()}>
+        <Button
+          onClick={() => {
+            setNotice(undefined);
+            show(text);
+          }}
+          disabled={!text.trim()}
+        >
           Leer alertas
         </Button>
       )}

@@ -60,6 +60,39 @@ test.describe("flujo completo de un usuario", () => {
     await expect(page.getByText("alerta", { exact: true })).toBeVisible();
   });
 
+  test("recibe una alerta compartida desde otra app (Compartir → Cuadre)", async ({ page }) => {
+    await page.goto("/alertas");
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.reload();
+    expect(await page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
+
+    // Lo mismo que hace Android al compartir: un POST multipart al share_target del manifest.
+    await page.evaluate(() => {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/alertas/compartir";
+      form.enctype = "multipart/form-data";
+      const text = document.createElement("textarea");
+      text.name = "text";
+      text.value = "Bancolombia: Compraste $9.900,00 en CAFE COMPARTIDO con tu T.Deb *1111, el 06/12/2026 a las 08:00.";
+      form.append(text);
+      document.body.append(form);
+      form.submit();
+    });
+
+    await expect(page).toHaveURL(/\/alertas$/);
+    await expect(page.getByRole("listitem").getByText("CAFE COMPARTIDO")).toBeVisible();
+  });
+
+  test("sin service worker, lo compartido no llega al servidor", async ({ request }) => {
+    const response = await request.post("/alertas/compartir", {
+      multipart: { text: "Bancolombia: Compraste $1.000,00 en NO DEBE LLEGAR" },
+      maxRedirects: 0,
+    });
+    expect(response.status()).toBe(303);
+    expect(response.headers().location).toContain("/alertas?compartido=sin-sw");
+  });
+
   test("importa el extracto con vista previa verificada", async ({ page }) => {
     await page.goto("/importar");
     await page.getByLabel("Extracto (PDF)").setInputFiles(await statement());
