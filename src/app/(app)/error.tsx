@@ -1,12 +1,11 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 export default function AppError({ error, retry }: { error: unknown; retry: () => void }) {
   useEffect(() => {
-    // Sin datos del usuario: solo el tipo y el identificador del error.
-    const digest = error instanceof Error && "digest" in error ? String(error.digest) : undefined;
-    console.error("Error en la app", { name: error instanceof Error ? error.name : typeof error, digest });
+    Sentry.captureException(error);
   }, [error]);
 
   return (

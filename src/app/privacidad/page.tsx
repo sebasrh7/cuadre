@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { PRIVACY_VERSION, privacyContact } from "@/lib/privacy";
+import { PRIVACY_EFFECTIVE_DATE, PRIVACY_VERSION, privacyContact } from "@/lib/privacy";
 
 export const metadata: Metadata = { title: "Política de tratamiento de datos · Cuadre" };
 
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       <div>
         <h1 className="text-xl font-semibold">Política de tratamiento de datos personales</h1>
         <p className="text-muted">
-          Versión {PRIVACY_VERSION}, vigente desde esa fecha y mientras la app esté en funcionamiento. Ley 1581 de 2012 y
+          Versión {PRIVACY_VERSION}, vigente desde el {PRIVACY_EFFECTIVE_DATE} y mientras la app esté en funcionamiento. Ley 1581 de 2012 y
           Decreto 1377 de 2013. Si cambia, te pediremos aceptarla de nuevo.
         </p>
       </div>
@@ -62,6 +62,11 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Vercel</strong>: aloja la aplicación; las funciones corren en São Paulo, Brasil.
+          </li>
+          <li>
+            <strong>Sentry</strong> (Estados Unidos): registro de errores técnicos para corregir fallas. Recibe el tipo
+            de error, el navegador y la página, pero no tus movimientos, montos, correo, cookies ni el contenido de lo
+            que envías.
           </li>
           <li>
             <strong>Google</strong>: inicio de sesión. Y, <strong>solo si lo activas</strong>, Gemini para sugerir la
