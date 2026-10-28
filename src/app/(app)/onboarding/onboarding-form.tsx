@@ -8,7 +8,7 @@ import { saveOnboarding, type OnboardingState } from "./actions";
 export type OnboardingDefaults = {
   workerType: string;
   arlRisk: string;
-  nitLastDigit: string;
+  idLastTwo: string;
   ownNames: string;
   ownKeys: string;
   savingsLast4: string;
@@ -43,16 +43,17 @@ export function OnboardingForm({ defaults }: { defaults: OnboardingDefaults }) {
           </Select>
         </Field>
         <Field
-          label="Último dígito de tu cédula o NIT"
-          hint="Define tus fechas de la DIAN. No pedimos el número completo."
-          error={e.nitLastDigit}
+          label="Dos últimos dígitos de tu cédula"
+          hint="Definen la fecha límite de tu PILA y de tu declaración de renta. No pedimos el número completo."
+          error={e.idLastTwo}
         >
           <Input
-            name="nitLastDigit"
+            name="idLastTwo"
             inputMode="numeric"
-            pattern="\d"
-            maxLength={1}
-            defaultValue={defaults.nitLastDigit}
+            pattern="\d{2}"
+            maxLength={2}
+            placeholder="07"
+            defaultValue={defaults.idLastTwo}
             required
           />
         </Field>

@@ -33,6 +33,7 @@ export async function saveOnboarding(
       privacy_accepted_at: new Date().toISOString(),
       privacy_version: PRIVACY_VERSION,
       ai_categorization: input.aiCategorization,
+      id_last_two: input.idLastTwo,
     })
     .eq("id", userId);
   if (consent.error) return { error: "No pudimos guardar. Inténtalo de nuevo." };
@@ -48,7 +49,7 @@ export async function saveOnboarding(
   const { error } = await supabase.rpc("save_onboarding", {
     p_worker_type: input.workerType,
     p_arl_risk: input.arlRisk,
-    p_nit_last_digit: input.nitLastDigit,
+    p_nit_last_digit: input.idLastTwo % 10,
     p_accounts: accounts,
     p_aliases: [
       ...input.ownNames.map((value) => ({ kind: "name", value })),

@@ -19,7 +19,7 @@ async function SavedOnboarding() {
   const [profile, accounts, aliases] = await Promise.all([
     supabase
       .from("profiles")
-      .select("worker_type, arl_risk, nit_last_digit, privacy_version, ai_categorization")
+      .select("worker_type, arl_risk, id_last_two, privacy_version, ai_categorization")
       .eq("id", userId)
       .single(),
     supabase.from("own_accounts").select("kind, last4"),
@@ -33,7 +33,7 @@ async function SavedOnboarding() {
   const defaults: OnboardingDefaults = {
     workerType: profile.data?.worker_type ?? "freelancer",
     arlRisk: String(profile.data?.arl_risk ?? 1),
-    nitLastDigit: profile.data?.nit_last_digit?.toString() ?? "",
+    idLastTwo: profile.data?.id_last_two?.toString().padStart(2, "0") ?? "",
     ownNames: join("name"),
     ownKeys: join("key"),
     savingsLast4: last4("savings"),

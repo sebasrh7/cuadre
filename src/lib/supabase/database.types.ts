@@ -224,12 +224,41 @@ export type Database = {
         }
         Relationships: []
       }
+      pila_deadlines: {
+        Row: {
+          business_day: number
+          digits_from: number
+          digits_to: number
+          norm: string
+          source_url: string
+          verified_on: string
+        }
+        Insert: {
+          business_day: number
+          digits_from: number
+          digits_to: number
+          norm: string
+          source_url: string
+          verified_on: string
+        }
+        Update: {
+          business_day?: number
+          digits_from?: number
+          digits_to?: number
+          norm?: string
+          source_url?: string
+          verified_on?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ai_categorization: boolean
           arl_risk: number | null
+          calendar_token: string
           created_at: string
           id: string
+          id_last_two: number | null
           nit_last_digit: number | null
           onboarded_at: string | null
           privacy_accepted_at: string | null
@@ -239,8 +268,10 @@ export type Database = {
         Insert: {
           ai_categorization?: boolean
           arl_risk?: number | null
+          calendar_token?: string
           created_at?: string
           id: string
+          id_last_two?: number | null
           nit_last_digit?: number | null
           onboarded_at?: string | null
           privacy_accepted_at?: string | null
@@ -250,8 +281,10 @@ export type Database = {
         Update: {
           ai_categorization?: boolean
           arl_risk?: number | null
+          calendar_token?: string
           created_at?: string
           id?: string
+          id_last_two?: number | null
           nit_last_digit?: number | null
           onboarded_at?: string | null
           privacy_accepted_at?: string | null
@@ -295,6 +328,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calendar_for_token: {
+        Args: { p_token: string }
+        Returns: {
+          business_day: number
+          id_last_two: number
+        }[]
+      }
       consume_ai_quota: { Args: { p_daily_limit: number }; Returns: boolean }
       delete_my_account: { Args: never; Returns: undefined }
       save_onboarding: {

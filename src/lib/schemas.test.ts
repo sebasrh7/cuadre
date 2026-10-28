@@ -44,7 +44,7 @@ describe("onboardingSchema", () => {
   const base = {
     workerType: "freelancer",
     arlRisk: "1",
-    nitLastDigit: "7",
+    idLastTwo: "07",
     ownNames: "Andrés Prueba Ejemplo",
     ownKeys: "@andres001, 3001234567\n@andres001",
     savingsLast4: "2222",
@@ -61,6 +61,11 @@ describe("onboardingSchema", () => {
 
   it("exige al menos un nombre propio", () => {
     expect(onboardingSchema.safeParse({ ...base, ownNames: " , " }).success).toBe(false);
+  });
+
+  it("lee los dos últimos dígitos del documento, con cero inicial", () => {
+    expect(onboardingSchema.parse(base).idLastTwo).toBe(7);
+    expect(onboardingSchema.safeParse({ ...base, idLastTwo: "7" }).success).toBe(false);
   });
 
   it("exige aceptar la política de datos", () => {

@@ -28,7 +28,11 @@ const list = (maxItem: number) =>
 export const onboardingSchema = z.object({
   workerType: z.enum(["employee_contractor", "freelancer", "other"]),
   arlRisk: z.coerce.number().int().min(1).max(5),
-  nitLastDigit: z.coerce.number().int().min(0).max(9),
+  idLastTwo: z
+    .string()
+    .trim()
+    .regex(/^\d{2}$/, "Escribe los dos últimos dígitos")
+    .transform(Number),
   ownNames: list(80).pipe(z.array(z.string()).min(1, "Escribe al menos tu nombre")),
   ownKeys: list(80),
   savingsLast4: last4,

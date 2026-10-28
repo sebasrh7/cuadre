@@ -2,6 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireConsentedUser } from "@/lib/auth";
 import { UNCATEGORIZED } from "@/lib/categories/categories";
+import { headers } from "next/headers";
+import { calendarUrls } from "@/lib/dates/calendar-url";
+import { pilaBusinessDay, upcomingPilaDues } from "@/lib/dates/pila";
 import { formatCop } from "@/lib/money/format";
 import { loadTaxRules } from "@/lib/tax/load";
 import { checkRenta, unmeasuredRentaThresholds, type RentaCheck } from "@/lib/tax/renta";
@@ -22,14 +25,22 @@ async function Dashboard() {
   const { supabase, profile } = await requireConsentedUser();
 
   const year = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric" }).format(new Date()));
-  const [{ data: movements }, taxRules] = await Promise.all([
+  const [{ data: movements }, taxRules, { data: pilaRules }] = await Promise.all([
     supabase
       .from("movements")
       .select("occurred_on, amount_cop, direction, kind, category")
       .gte("occurred_on", `${year}-01-01`)
       .lte("occurred_on", `${year}-12-31`),
     loadTaxRules(supabase, year),
+    supabase.from("pila_deadlines").select("digits_from, digits_to, business_day"),
   ]);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
+  const host = (await headers()).get("host");
+  const origin = host ? `${host.startsWith("localhost") ? "http" : "https"}://${host}` : "";
+  const nextPila =
+    pilaRules?.length && profile.id_last_two !== null
+      ? upcomingPilaDues(today, pilaBusinessDay(profile.id_last_two, pilaRules), 1)[0]
+      : null;
 
   if (!movements?.length) {
     return (
@@ -79,6 +90,21 @@ async function Dashboard() {
         </p>
       </section>
 
+      {nextPila && (
+        <DeadlinesCard
+          due={nextPila}
+          periodIncome={incomeByMonth.find((m) => m.month === nextPila.periodMonth)?.income ?? null}
+          estimate={
+            taxRules
+              ? (income: number) =>
+                  estimateSocialSecurity(income, (profile.arl_risk ?? 1) as 1 | 2 | 3 | 4 | 5, taxRules.rules)
+              : null
+          }
+          calendar={calendarUrls(origin, profile.calendar_token)}
+          today={today}
+        />
+      )}
+
       <ExpensesCard
         expenses={movements.filter((m) => m.kind === "expense")}
         lastMonth={lastMonth.month}
@@ -119,6 +145,57 @@ async function Dashboard() {
         para ver la tasa a la que recibiste cada pago.
       </p>
     </div>
+  );
+}
+
+function DeadlinesCard({
+  due,
+  periodIncome,
+  estimate,
+  calendar,
+  today,
+}: {
+  due: { periodMonth: string; dueDate: string };
+  periodIncome: number | null;
+  estimate: ((income: number) => ReturnType<typeof estimateSocialSecurity>) | null;
+  calendar: ReturnType<typeof calendarUrls>;
+  today: string;
+}) {
+  const days = Math.round((Date.parse(due.dueDate) - Date.parse(today)) / 86_400_000);
+  const period = monthName(due.periodMonth).toLowerCase();
+  const ss = periodIncome !== null && estimate ? estimate(periodIncome) : null;
+  const dueLabel = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(
+    new Date(`${due.dueDate}T00:00:00Z`),
+  );
+
+  return (
+    <section className="flex flex-col gap-3 rounded-lg border border-accent p-4">
+      <h2 className="font-semibold">Próxima fecha</h2>
+      <p>
+        <strong>PILA de {period}</strong>: vence el {dueLabel}{" "}
+        <span className="text-muted">({days === 0 ? "hoy" : days === 1 ? "mañana" : `en ${days} días`})</span>.
+      </p>
+      <p className="text-sm text-muted">
+        {ss === null
+          ? `Importa el extracto con tus movimientos de ${period} para ver si te toca pagar y cuánto.`
+          : ss.obligated
+            ? `Según tus ingresos de ${period} (${formatCop(periodIncome!)}), el aporte estimado es ${formatCop(ss.total)}.`
+            : `En ${period} recibiste ${formatCop(periodIncome!)}, menos de 1 salario mínimo: no estás obligado a pagar ese mes.`}
+      </p>
+      <div className="flex flex-wrap gap-3 text-sm">
+        <a href={calendar.google} target="_blank" rel="noreferrer" className="text-accent underline">
+          Recibir los avisos en Google Calendar
+        </a>
+        <a href={calendar.webcal} className="text-muted underline">
+          Otro calendario (iPhone, Outlook)
+        </a>
+      </div>
+      <p className="text-xs text-muted">
+        El calendario trae las fechas de la PILA de los próximos 12 meses, con aviso 2 días antes. No incluye montos.
+        Las fechas de la declaración de renta de {Number(today.slice(0, 4)) + 1} se agregarán cuando la DIAN publique el
+        calendario tributario.
+      </p>
+    </section>
   );
 }
 

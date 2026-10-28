@@ -26,9 +26,11 @@ export async function requireConsentedUser() {
   const { supabase, userId } = await requireUser();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("onboarded_at, privacy_version, ai_categorization, arl_risk")
+    .select("onboarded_at, privacy_version, ai_categorization, arl_risk, id_last_two, calendar_token")
     .eq("id", userId)
     .single();
-  if (!profile?.onboarded_at || profile.privacy_version !== PRIVACY_VERSION) redirect("/onboarding");
+  if (!profile?.onboarded_at || profile.privacy_version !== PRIVACY_VERSION || profile.id_last_two === null) {
+    redirect("/onboarding");
+  }
   return { supabase, userId, profile };
 }
