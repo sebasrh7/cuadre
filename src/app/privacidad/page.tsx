@@ -14,7 +14,10 @@ export default function PrivacyPage() {
       </Link>
       <div>
         <h1 className="text-xl font-semibold">Política de tratamiento de datos personales</h1>
-        <p className="text-muted">Versión {PRIVACY_VERSION}. Ley 1581 de 2012 y Decreto 1377 de 2013.</p>
+        <p className="text-muted">
+          Versión {PRIVACY_VERSION}, vigente desde esa fecha y mientras la app esté en funcionamiento. Ley 1581 de 2012 y
+          Decreto 1377 de 2013. Si cambia, te pediremos aceptarla de nuevo.
+        </p>
       </div>
 
       <Section title="1. Responsable">
@@ -76,8 +79,10 @@ export default function PrivacyPage() {
           <li>Descargar todos tus datos en Mi cuenta → Exportar.</li>
           <li>Borrar tu cuenta y todos tus datos en Mi cuenta → Borrar cuenta. El borrado es inmediato y definitivo.</li>
           <li>
-            Para consultas o reclamos, escribe al correo de contacto. Respondemos consultas en máximo 10 días hábiles y
-            reclamos en máximo 15 días hábiles. También puedes acudir a la Superintendencia de Industria y Comercio.
+            Consultas y reclamos los atiende directamente el responsable, en el correo de contacto. Indica tu nombre, el
+            correo con el que entras y lo que solicitas. Respondemos consultas en máximo 10 días hábiles y reclamos en
+            máximo 15 días hábiles (Ley 1581, arts. 14 y 15). Si no quedas conforme, puedes acudir a la
+            Superintendencia de Industria y Comercio.
           </li>
         </ul>
       </Section>
@@ -101,19 +106,29 @@ export default function PrivacyPage() {
 
 async function Controller() {
   await connection();
-  const { controller, email } = privacyContact();
+  const { controller, city, address, phone, email } = privacyContact();
+  const pending = "pendiente de publicar";
   return (
-    <p>
-      {controller ?? "El operador de Cuadre"}, persona natural, en Colombia. Contacto:{" "}
-      {email ? (
-        <a href={`mailto:${email}`} className="underline">
-          {email}
-        </a>
-      ) : (
-        "pendiente de publicar"
-      )}
-      .
-    </p>
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+      <dt className="text-muted">Responsable</dt>
+      <dd>{controller ?? pending}, persona natural</dd>
+      <dt className="text-muted">Domicilio</dt>
+      <dd>{city ? `${city}, Colombia` : pending}</dd>
+      <dt className="text-muted">Dirección</dt>
+      <dd>{address ?? pending}</dd>
+      <dt className="text-muted">Teléfono</dt>
+      <dd>{phone ?? pending}</dd>
+      <dt className="text-muted">Correo</dt>
+      <dd>
+        {email ? (
+          <a href={`mailto:${email}`} className="underline">
+            {email}
+          </a>
+        ) : (
+          pending
+        )}
+      </dd>
+    </dl>
   );
 }
 
