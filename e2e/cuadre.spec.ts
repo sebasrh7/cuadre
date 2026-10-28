@@ -44,6 +44,21 @@ test.describe("flujo completo de un usuario", () => {
     await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
   });
 
+  test("pega una alerta y la ve como movimiento provisional", async ({ page }) => {
+    await page.goto("/alertas");
+    // Alerta sintética de una compra que también está en el extracto de prueba (5 de diciembre).
+    await page
+      .getByLabel("Alertas")
+      .fill("Bancolombia: Compraste $45.900,00 en TIENDA EJEMPLO con tu T.Deb *1111, el 05/12/2026 a las 10:00. Si tienes dudas…");
+    await page.getByRole("button", { name: "Leer alertas" }).click();
+    await expect(page.getByText("TIENDA EJEMPLO")).toBeVisible();
+    await page.getByRole("button", { name: "Guardar 1 alerta" }).click();
+    await expect(page.getByText("1 movimiento nuevo")).toBeVisible();
+
+    await page.goto("/movimientos");
+    await expect(page.getByText("alerta", { exact: true })).toBeVisible();
+  });
+
   test("importa el extracto con vista previa verificada", async ({ page }) => {
     await page.goto("/importar");
     await page.getByLabel("Extracto (PDF)").setInputFiles(await statement());
@@ -57,6 +72,8 @@ test.describe("flujo completo de un usuario", () => {
     await page.getByRole("button", { name: "Guardar movimientos" }).click();
     // 5 movimientos + 1 de intereses agrupados (diciembre suma $0 y se omite).
     await expect(page.getByText("6 movimientos nuevos")).toBeVisible();
+    // La alerta del 5 de diciembre ya está en el extracto: se reemplaza.
+    await expect(page.getByText("1 alerta reemplazada por el extracto")).toBeVisible();
   });
 
   test("reimportar el mismo extracto no duplica nada", async ({ page }) => {
@@ -75,6 +92,7 @@ test.describe("flujo completo de un usuario", () => {
     await expect(page.getByRole("heading", { name: "Enero de 2027" })).toBeVisible();
     await expect(page.getByText("Giro internacional")).toBeVisible();
     await expect(page.getByText("TIENDA EJEMPLO")).toBeVisible();
+    await expect(page.getByText("alerta", { exact: true })).toHaveCount(0);
   });
 
   test("exporta los movimientos a CSV", async ({ page }) => {

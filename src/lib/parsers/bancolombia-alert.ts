@@ -42,34 +42,14 @@ const AMOUNT = String.raw`\$\s?([\d.,]+)`;
 const DATE = String.raw`(\d{2}/\d{2}/\d{2,4})`;
 const TIME = String.raw`(\d{2}:\d{2})`;
 
-const CARD_PURCHASE = new RegExp(
-  String.raw`Compraste ${AMOUNT} en (.+?) con tu T\.\s?(Deb|Cred)\w* \*(\d{4}),? el ${DATE} a las ${TIME}`,
-  "i",
-);
-const TRANSFER_OUT_KEY = new RegExp(
-  String.raw`transferiste ${AMOUNT} a la llave (\S+) desde tu cuenta \*(\d{4}) a (.+?) el ${DATE} a las ${TIME}`,
-  "i",
-);
-const TRANSFER_OUT_ACCOUNT = new RegExp(
-  String.raw`transferiste ${AMOUNT} desde tu cuenta \*(\d{4}) a la cuenta \*(\d{4,}) el ${DATE} a las ${TIME}`,
-  "i",
-);
-const TRANSFER_IN = new RegExp(
-  String.raw`recibiste una transferencia de (.+?) por ${AMOUNT} en tu cuenta \*(\d{4}) conectada a la llave (\S+) el ${DATE}(?: a las ${TIME})?`,
-  "i",
-);
-
-/**
- * Lee una alerta de Bancolombia (texto pegado del correo, SMS o notificación).
- * Acepta el cuerpo completo del correo: el texto alrededor de la alerta se ignora.
- */
-export function parseBancolombiaAlert(text: string): ParseAlertResult {
-  const normalized = text.replace(/\s+/g, " ");
-
-  let m = CARD_PURCHASE.exec(normalized);
-  if (m) {
-    const [, amount, merchant, cardType, last4, date, time] = m;
-    return ok({
+/** Cada plantilla de alerta: su patrón y cómo convertir lo que captura. */
+const TEMPLATES: { pattern: RegExp; build: (m: RegExpExecArray) => BancolombiaAlert }[] = [
+  {
+    pattern: new RegExp(
+      String.raw`Compraste ${AMOUNT} en (.+?) con tu T\.\s?(Deb|Cred)\w* \*(\d{4}),? el ${DATE} a las ${TIME}`,
+      "gi",
+    ),
+    build: ([, amount, merchant, cardType, last4, date, time]) => ({
       kind: "card_purchase",
       amountCop: parseCopAmount(amount),
       merchant: merchant.trim(),
@@ -77,13 +57,14 @@ export function parseBancolombiaAlert(text: string): ParseAlertResult {
       accountLast4: last4,
       date: parseDate(date),
       time,
-    });
-  }
-
-  m = TRANSFER_OUT_KEY.exec(normalized);
-  if (m) {
-    const [, amount, key, last4, name, date, time] = m;
-    return ok({
+    }),
+  },
+  {
+    pattern: new RegExp(
+      String.raw`transferiste ${AMOUNT} a la llave (\S+) desde tu cuenta \*(\d{4}) a (.+?) el ${DATE} a las ${TIME}`,
+      "gi",
+    ),
+    build: ([, amount, key, last4, name, date, time]) => ({
       kind: "transfer_out_key",
       amountCop: parseCopAmount(amount),
       counterpartyKey: key,
@@ -91,26 +72,29 @@ export function parseBancolombiaAlert(text: string): ParseAlertResult {
       accountLast4: last4,
       date: parseDate(date),
       time,
-    });
-  }
-
-  m = TRANSFER_OUT_ACCOUNT.exec(normalized);
-  if (m) {
-    const [, amount, last4, destination, date, time] = m;
-    return ok({
+    }),
+  },
+  {
+    pattern: new RegExp(
+      String.raw`transferiste ${AMOUNT} desde tu cuenta \*(\d{4}) a la cuenta \*(\d{4,}) el ${DATE} a las ${TIME}`,
+      "gi",
+    ),
+    build: ([, amount, last4, destination, date, time]) => ({
       kind: "transfer_out_account",
       amountCop: parseCopAmount(amount),
       accountLast4: last4,
+      // Solo los últimos 4 dígitos: nunca se guarda la cuenta completa.
       counterpartyAccountLast4: destination.slice(-4),
       date: parseDate(date),
       time,
-    });
-  }
-
-  m = TRANSFER_IN.exec(normalized);
-  if (m) {
-    const [, name, amount, last4, key, date, time] = m;
-    return ok({
+    }),
+  },
+  {
+    pattern: new RegExp(
+      String.raw`recibiste una transferencia de (.+?) por ${AMOUNT} en tu cuenta \*(\d{4}) conectada a la llave (\S+) el ${DATE}(?: a las ${TIME})?`,
+      "gi",
+    ),
+    build: ([, name, amount, last4, key, date, time]) => ({
       kind: "transfer_in",
       amountCop: parseCopAmount(amount),
       counterpartyName: name.trim(),
@@ -118,14 +102,36 @@ export function parseBancolombiaAlert(text: string): ParseAlertResult {
       accountLast4: last4,
       date: parseDate(date),
       time: time ?? null,
-    });
-  }
+    }),
+  },
+];
 
-  return { ok: false, reason: "unrecognized" };
+/**
+ * Lee una alerta de Bancolombia (texto pegado del correo, SMS o notificación).
+ * Acepta el cuerpo completo del correo: el texto alrededor de la alerta se ignora.
+ */
+export function parseBancolombiaAlert(text: string): ParseAlertResult {
+  const [first] = parseBancolombiaAlerts(text);
+  return first ? { ok: true, alert: first } : { ok: false, reason: "unrecognized" };
 }
 
-function ok(alert: BancolombiaAlert): ParseAlertResult {
-  return { ok: true, alert };
+/**
+ * Lee todas las alertas de un texto (varios correos o SMS pegados juntos), en
+ * el orden en que aparecen.
+ */
+export function parseBancolombiaAlerts(text: string): BancolombiaAlert[] {
+  const normalized = text.replace(/\s+/g, " ");
+  const found: { index: number; alert: BancolombiaAlert }[] = [];
+  for (const { pattern, build } of TEMPLATES) {
+    for (const match of normalized.matchAll(pattern)) {
+      try {
+        found.push({ index: match.index, alert: build(match as RegExpExecArray) });
+      } catch {
+        // Un monto ilegible invalida solo esa alerta.
+      }
+    }
+  }
+  return found.sort((a, b) => a.index - b.index).map((f) => f.alert);
 }
 
 /** `DD/MM/YY` o `DD/MM/YYYY` → `YYYY-MM-DD`. */
