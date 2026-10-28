@@ -164,6 +164,8 @@ site_url = "https://cuadre-kohl-eight.vercel.app"
 additional_redirect_urls = [
   "https://cuadre-kohl-eight.vercel.app/auth/callback",
   "http://localhost:3000/auth/callback",
+  # Vistas previas de cada Pull Request en Vercel (solo las de este proyecto).
+  "https://cuadre-*-sebasrh7s-projects.vercel.app/auth/callback",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
