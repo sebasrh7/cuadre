@@ -16,7 +16,7 @@ Next.js 16 (App Router) + TypeScript estricto · Supabase (Postgres, RLS, Auth, 
 - `npm run db:types` — regenera `src/lib/supabase/database.types.ts` desde el proyecto enlazado
 - `npm run anonimizar-extracto -- "ruta.pdf"` — lo corre el usuario en su terminal; nunca con PDFs reales dentro del repo
 
-Node 22.13 o superior (pdf.js lo exige).
+Node 22.13 o superior (pdf.js lo exige). GitHub Actions corre lint, tipos, tests y build en cada push (`.github/workflows/ci.yml`).
 
 ## Next 16 en este proyecto
 - `cacheComponents` está activo: todo lo que lea la sesión va dentro de `<Suspense>`; los datos del usuario no se cachean en el servidor.

@@ -52,13 +52,13 @@
 | # | Funcionalidad | Detalle |
 |---|---|---|
 | 1 | Autenticación | Solo Google (Supabase Auth) ✅. Sin correo ni contraseñas: no hay que enviar correos ni guardar claves. Si los usuarios de prueba lo piden: cuenta propia (requiere SMTP para confirmar y recuperar) o teléfono (SMS de pago) |
-| 2 | Onboarding (≤2 min) | Tipo de independiente, riesgo ARL, últimos dígitos del NIT/cédula, **cuentas, llaves y nombres propios** (para detectar transferencias propias) |
-| 3 | Importar extracto Bancolombia | PDF + contraseña, procesado en el navegador; vista previa antes de guardar |
-| 4 | Pegar/compartir alertas | Parser de las 4 plantillas; deduplicación |
-| 5 | Facturas DIAN | ZIP/XML → gasto enriquecido con NIT y soporte |
-| 6 | Ingresos en USD y pérdida cambiaria (opcional, baja prioridad) | Solo si el usuario conoce el monto en USD. Quien cobra un monto fijo en pesos no puede ver ni controlar la conversión |
-| 7 | Categorización de gastos (IA) | Comercio nuevo → Gemini propone categoría → caché por comercio normalizado; el usuario puede corregir |
-| 8 | Panel mensual y anual | Ingresos (USD y COP), gastos por categoría, pérdida cambiaria, comparación entre meses |
+| 2 | Onboarding (≤2 min) ✅ | Tipo de independiente, riesgo ARL, últimos dígitos del NIT/cédula, **cuentas, llaves y nombres propios** (para detectar transferencias propias) |
+| 3 | Importar extracto Bancolombia ✅ | PDF + contraseña, procesado en el navegador; vista previa antes de guardar |
+| 4 | Pegar/compartir alertas → **v2** | Parser listo con tests; falta la pantalla. Pasa a v2: las alertas no traen los ingresos (giros) y hay que pegarlas una por una |
+| 5 | Facturas DIAN → **v2** | ZIP/XML → gasto enriquecido con NIT y soporte. ~3 al mes y no cambian ningún cálculo |
+| 6 | Ingresos en USD (registro manual ✅); TRM y pérdida cambiaria → **v2** | Solo si el usuario conoce el monto en USD. Quien cobra un monto fijo en pesos no puede ver ni controlar la conversión |
+| 7 | Categorización de gastos (IA) ✅ | Comercio nuevo → Gemini propone categoría → caché por comercio normalizado; el usuario puede corregir |
+| 8 | Panel mensual y anual ✅ | Ingresos por mes y gastos por categoría (año y último mes). Comparación detallada entre meses → v2 |
 | 9 | Calculadora de seguridad social ✅ | IBC (40 %, piso 1 SMMLV, techo 25), salud, pensión y ARL del último mes, con la fórmula visible |
 | 10 | "¿Me toca declarar renta?" ✅ | Ingresos y consignaciones del año contra 1.400 UVT, con proyección; patrimonio y compras se listan para revisar a mano |
 | 11 | Alertas de fechas | Seguridad social y renta según el NIT |
@@ -105,10 +105,10 @@ Usuarios activos al mes · retención del mes 2 · % de movimientos que entran p
 | Semana | Entregable |
 |---|---|
 | **0** ✅ | Revisión del correo, hallazgos (sección 3), proyecto Next.js, parser de alertas con tests |
-| **1** | Supabase (esquema + RLS) ✅, autenticación ✅, onboarding con cuentas propias ✅, ingreso manual en USD ✅ (código listo; falta conectar el proyecto remoto). Primer despliegue en Vercel |
-| **2** | Importar extracto PDF en el navegador ✅, transferencias propias ✅, ingresos en COP ✅, seguridad social y renta ✅ (adelantados de la semana 4). Pendiente: conciliación con alertas |
-| **3** | Facturas DIAN, TRM y pérdida cambiaria, categorización con Gemini, panel |
-| **4** | Seguridad social, semáforo de renta, alertas de fechas, exportar/borrar, privacidad, PWA, README. **Lanzamiento a 10-20 personas** |
+| **1** ✅ | Supabase (esquema + RLS), autenticación, onboarding con cuentas propias, ingreso manual en USD, despliegue en Vercel |
+| **2** ✅ | Importar extracto PDF en el navegador, transferencias propias, ingresos en COP, seguridad social y renta (adelantados de la semana 4) |
+| **3** ✅ | Categorización con reglas + Gemini, panel. (Facturas DIAN y TRM → v2) |
+| **4** | Exportar/borrar ✅, privacidad ✅. Pendiente, en orden: CI (GitHub Actions), recordatorios de PILA y renta, botón de comentarios + Sentry, README con capturas, PWA. **Lanzamiento a 10-20 personas** |
 
 ## 10. Riesgos
 
