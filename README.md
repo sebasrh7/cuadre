@@ -20,11 +20,13 @@
 | | |
 |---|---|
 | **Importa el extracto** | Lee el PDF de Bancolombia **en el navegador** con pdf.js: el archivo y su contraseña nunca salen del equipo. Verifica que el extracto cuadre (resumen, totales y saldo de cada movimiento) antes de guardar nada. Reimportar no duplica. |
+| **Alertas del mes en curso** | El extracto es trimestral: las alertas de Bancolombia se pegan o se comparten desde el celular (Compartir → Cuadre en Android). Se leen en el navegador y, al llegar el extracto, sus movimientos las reemplazan sin duplicar. |
 | **Separa lo que es tuyo** | Detecta transferencias entre tus propias cuentas (Nequi, tu nombre aunque el banco lo corte a 12 letras) para que no cuenten como ingreso ni gasto. |
 | **Categoriza gastos** | Reglas para comercios conocidos + **Gemini** (opcional) para el resto, con salida JSON validada con Zod, caché por comercio, cupo diario y correcciones del usuario que siempre ganan. Sin IA también funciona. |
 | **Seguridad social** | IBC (40 % del ingreso, piso 1 SMMLV, techo 25), salud, pensión y ARL mes a mes, con la fórmula visible. |
 | **¿Me toca declarar renta?** | Ingresos y consignaciones contra el tope en UVT, con proyección a fin de año. |
 | **Recordatorios** | Próxima fecha de la PILA (según los dos últimos dígitos de la cédula, días hábiles y festivos) y un calendario `.ics` para suscribirse desde Google Calendar. |
+| **Instalable** | PWA con botón "Instalar Cuadre"; el service worker solo recibe lo compartido y no guarda datos en caché. |
 | **Tus datos son tuyos** | Política de tratamiento de datos (Ley 1581), autorización expresa, exportar a Excel/JSON y borrar la cuenta con todo en cascada. |
 
 ## Decisiones de diseño
@@ -37,13 +39,13 @@
 
 ## Stack
 
-Next.js 16 (App Router, Server Actions, Cache Components) · React 19 · TypeScript estricto · Tailwind CSS 4 · Supabase (Postgres, Auth, RLS) · Zod · pdf.js · Gemini · Vitest · Playwright · GitHub Actions · Vercel
+Next.js 16 (App Router, Server Actions, Cache Components) · React 19 · TypeScript estricto · Tailwind CSS 4 · Supabase (Postgres, Auth, RLS) · Zod · pdf.js · Gemini · Sentry · Vitest · Playwright · GitHub Actions · Vercel
 
 ## Estructura
 
 ```
 src/
-  app/                      Rutas (inicio, importar, movimientos, cuenta, privacidad, calendario .ics)
+  app/                      Rutas (inicio, importar, alertas, movimientos, cuenta, privacidad, calendario .ics)
   lib/parsers/              Lectores puros del extracto y de las alertas de Bancolombia
   lib/movements/            Clasificación, transferencias propias, plan de importación, conciliación
   lib/categories/           Reglas, orquestación con caché/cupo y proveedor de Gemini
