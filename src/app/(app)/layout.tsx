@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logout } from "@/app/ingresar/actions";
+import { FeedbackButton } from "@/components/feedback-button";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -16,7 +17,8 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           </form>
         </nav>
       </header>
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">{children}</main>
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8 pb-20">{children}</main>
+      <FeedbackButton />
     </div>
   );
 }
