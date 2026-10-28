@@ -61,9 +61,9 @@
 | 8 | Panel mensual y anual ✅ | Ingresos por mes y gastos por categoría (año y último mes). Comparación detallada entre meses → v2 |
 | 9 | Calculadora de seguridad social ✅ | IBC (40 %, piso 1 SMMLV, techo 25), salud, pensión y ARL del último mes, con la fórmula visible |
 | 10 | "¿Me toca declarar renta?" ✅ | Ingresos y consignaciones del año contra 1.400 UVT, con proyección; patrimonio y compras se listan para revisar a mano |
-| 11 | Alertas de fechas | Seguridad social y renta según el NIT |
+| 11 | Alertas de fechas ✅ (PILA) | PILA por los dos últimos dígitos, días hábiles y festivos; calendario .ics suscribible. Renta: cuando la DIAN publique el calendario 2027 |
 | 12 | Exportar y borrar ✅ | CSV para Excel (UTF-8, `;`, sin inyección de fórmulas) y JSON completo; borrar cuenta con todos los datos en cascada |
-| 13 | Base de producto real | Privacidad (Ley 1581) ✅: política versionada, autorización expresa registrada, IA opcional y apagada por defecto. Pendiente: Sentry, analítica, botón de comentarios |
+| 13 | Base de producto real | Privacidad (Ley 1581) ✅: política versionada, autorización expresa registrada, IA opcional y apagada por defecto. Botón de comentarios ✅. Pendiente: Sentry, analítica |
 
 ## 6. Fuera de alcance v1
 
@@ -108,7 +108,7 @@ Usuarios activos al mes · retención del mes 2 · % de movimientos que entran p
 | **1** ✅ | Supabase (esquema + RLS), autenticación, onboarding con cuentas propias, ingreso manual en USD, despliegue en Vercel |
 | **2** ✅ | Importar extracto PDF en el navegador, transferencias propias, ingresos en COP, seguridad social y renta (adelantados de la semana 4) |
 | **3** ✅ | Categorización con reglas + Gemini, panel. (Facturas DIAN y TRM → v2) |
-| **4** | Exportar/borrar ✅, privacidad ✅. Pendiente, en orden: CI (GitHub Actions), recordatorios de PILA y renta, botón de comentarios + Sentry, README con capturas, PWA. **Lanzamiento a 10-20 personas** |
+| **4** | Exportar/borrar ✅, privacidad ✅, CI ✅, recordatorios de PILA (Inicio + calendario .ics) ✅, botón de comentarios y pantallas de error ✅, README con capturas ✅. Pendiente: Sentry (requiere cuenta), PWA, fechas de renta 2027 (cuando la DIAN publique el calendario). **Lanzamiento a 10-20 personas** |
 
 ## 10. Riesgos
 
