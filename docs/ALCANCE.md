@@ -34,9 +34,9 @@
 
 | Prioridad | Fuente | Cómo entra | Estado |
 |---|---|---|---|
-| 1 | **Extracto mensual Bancolombia (PDF)** | Se sube y se lee **en el navegador** con la contraseña del usuario; el PDF nunca sale del dispositivo, al servidor solo llegan los movimientos extraídos | v1 |
-| 2 | **Alertas de Bancolombia** | Pegar el texto o compartirlo desde el celular (Web Share Target). Parser con regex, sin IA | v1 — **parser hecho** |
-| 3 | **Facturas electrónicas DIAN (ZIP/XML)** | Arrastrar el archivo. Aporta NIT, razón social y soporte del gasto | v1 |
+| 1 | **Extracto Bancolombia (PDF, trimestral)** | Se sube y se lee **en el navegador** con la contraseña del usuario; el PDF nunca sale del dispositivo, al servidor solo llegan los movimientos extraídos | v1 |
+| 2 | **Alertas de Bancolombia** | Pegar el texto o compartirlo desde el celular (Web Share Target). Se leen en el navegador; al importar el extracto, sus movimientos reemplazan a las alertas | v1 ✅ |
+| 3 | **Facturas electrónicas DIAN (ZIP/XML)** | Arrastrar el archivo. Aporta NIT, razón social y soporte del gasto | v2 |
 | 4 | **Ingresos en USD (opcional)** | Solo para quien conoce el monto en USD: se concilia con el `ABONO DE GIRO INTERNACIONAL` y da la tasa efectiva. El usuario de referencia cobra un monto fijo en pesos y no conoce los dólares, así que los ingresos salen del extracto en COP | v1 |
 | 5 | Nequi, Nu débito, Nu crédito | Extractos o exportaciones de cada entidad; formatos por revisar | v2 |
 | 6 | Importación automática desde Gmail | OAuth con Gmail (`gmail.readonly` es *scope* restringido: verificación de Google en producción; en modo testing alcanza para ≤100 usuarios) | v2 |
@@ -54,7 +54,7 @@
 | 1 | Autenticación | Solo Google (Supabase Auth) ✅. Sin correo ni contraseñas: no hay que enviar correos ni guardar claves. Si los usuarios de prueba lo piden: cuenta propia (requiere SMTP para confirmar y recuperar) o teléfono (SMS de pago) |
 | 2 | Onboarding (≤2 min) ✅ | Tipo de independiente, riesgo ARL, últimos dígitos del NIT/cédula, **cuentas, llaves y nombres propios** (para detectar transferencias propias) |
 | 3 | Importar extracto Bancolombia ✅ | PDF + contraseña, procesado en el navegador; vista previa antes de guardar |
-| 4 | Pegar/compartir alertas → **v2** | Parser listo con tests; falta la pantalla. Pasa a v2: las alertas no traen los ingresos (giros) y hay que pegarlas una por una |
+| 4 | Pegar/compartir alertas ✅ | `/alertas` (varias a la vez) y Compartir → Cuadre en Android con un service worker que no guarda caché. Las alertas son provisionales: el extracto las reemplaza (monto, sentido y fecha ±1 día) y heredan su categoría |
 | 5 | Facturas DIAN → **v2** | ZIP/XML → gasto enriquecido con NIT y soporte. ~3 al mes y no cambian ningún cálculo |
 | 6 | Ingresos en USD (registro manual ✅); TRM y pérdida cambiaria → **v2** | Solo si el usuario conoce el monto en USD. Quien cobra un monto fijo en pesos no puede ver ni controlar la conversión |
 | 7 | Categorización de gastos (IA) ✅ | Comercio nuevo → Gemini propone categoría → caché por comercio normalizado; el usuario puede corregir |
@@ -63,11 +63,11 @@
 | 10 | "¿Me toca declarar renta?" ✅ | Ingresos y consignaciones del año contra 1.400 UVT, con proyección; patrimonio y compras se listan para revisar a mano |
 | 11 | Alertas de fechas ✅ (PILA) | PILA por los dos últimos dígitos, días hábiles y festivos; calendario .ics suscribible. Renta: cuando la DIAN publique el calendario 2027 |
 | 12 | Exportar y borrar ✅ | CSV para Excel (UTF-8, `;`, sin inyección de fórmulas) y JSON completo; borrar cuenta con todos los datos en cascada |
-| 13 | Base de producto real | Privacidad (Ley 1581) ✅: política versionada, autorización expresa registrada, IA opcional y apagada por defecto. Botón de comentarios ✅. Pendiente: Sentry, analítica |
+| 13 | Base de producto real | Privacidad (Ley 1581) ✅: política versionada, autorización expresa registrada, IA opcional y apagada por defecto. Botón de comentarios ✅. Sentry ✅ (solo errores y 10 % de rendimiento, sin datos personales), métricas agregadas en `analytics` ✅, PWA instalable ✅ |
 
 ## 6. Fuera de alcance v1
 
-Nequi y Nu · lectura de fotos de recibos con IA · asistente RAG sobre normativa · emitir facturas electrónicas · conexión directa con bancos · generar el formulario de renta · personas jurídicas / régimen simple · otros países · importación automática desde Gmail.
+Nequi y Nu · facturas DIAN · TRM y pérdida cambiaria · lectura de fotos de recibos con IA · asistente RAG sobre normativa · emitir facturas electrónicas · conexión directa con bancos · generar el formulario de renta · personas jurídicas / régimen simple · otros países · importación automática desde Gmail.
 
 ## 7. Arquitectura y stack
 
@@ -81,9 +81,9 @@ Nequi y Nu · lectura de fotos de recibos con IA · asistente RAG sobre normativ
 | Extracto PDF | pdf.js en el navegador (soporta PDF con contraseña) |
 | TRM | API de datos abiertos (datos.gov.co), cacheada en `fx_rates` una vez al día. **Verificar el endpoint antes de implementarlo** |
 | IA | Gemini Flash (plan gratuito) detrás de `CategoryProvider`; caché, límite diario por usuario, *fallback* "Sin categoría" |
-| Correo / cron | Resend (plan gratuito) + Vercel Cron |
+| Recordatorios | Calendario `.ics` suscribible (Google Calendar avisa); sin correos ni cron |
 | Calidad | Vitest, Playwright, GitHub Actions |
-| Observabilidad | Sentry + PostHog (planes gratuitos) |
+| Observabilidad | Sentry (plan gratuito) y métricas agregadas en SQL (`analytics.resumen`), sin rastreo de usuarios |
 | Despliegue | Vercel Hobby |
 
 ### Modelo de datos (borrador)
@@ -108,7 +108,8 @@ Usuarios activos al mes · retención del mes 2 · % de movimientos que entran p
 | **1** ✅ | Supabase (esquema + RLS), autenticación, onboarding con cuentas propias, ingreso manual en USD, despliegue en Vercel |
 | **2** ✅ | Importar extracto PDF en el navegador, transferencias propias, ingresos en COP, seguridad social y renta (adelantados de la semana 4) |
 | **3** ✅ | Categorización con reglas + Gemini, panel. (Facturas DIAN y TRM → v2) |
-| **4** | Exportar/borrar ✅, privacidad ✅, CI ✅, recordatorios de PILA (Inicio + calendario .ics) ✅, botón de comentarios y pantallas de error ✅, README con capturas ✅. Pendiente: Sentry (requiere cuenta), PWA, fechas de renta 2027 (cuando la DIAN publique el calendario). **Lanzamiento a 10-20 personas** |
+| **4** ✅ | Exportar/borrar, privacidad, CI con e2e (Playwright + Supabase local), recordatorios de PILA, comentarios, Sentry, métricas, PWA instalable, ajustes para celular, alertas pegadas y compartidas, README con capturas |
+| **5** | **Lanzamiento a 10-20 personas** y decidir la v2 con sus comentarios. Pendiente de terceros: fechas de renta 2027 cuando la DIAN publique el calendario |
 
 ## 10. Riesgos
 
