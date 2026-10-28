@@ -24,7 +24,7 @@ export function OnboardingForm({ defaults }: { defaults: OnboardingDefaults }) {
 
   return (
     <form action={action} className="flex flex-col gap-6">
-      <fieldset className="flex flex-col gap-4">
+      <fieldset className="min-w-0 flex flex-col gap-4">
         <legend className="mb-2 font-semibold">Tu situación</legend>
         <Field label="¿Cómo trabajas?" error={e.workerType}>
           <Select name="workerType" defaultValue={defaults.workerType} required>
@@ -59,7 +59,7 @@ export function OnboardingForm({ defaults }: { defaults: OnboardingDefaults }) {
         </Field>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-4">
+      <fieldset className="min-w-0 flex flex-col gap-4">
         <legend className="mb-2 font-semibold">Lo que es tuyo</legend>
         <p className="text-sm text-muted">
           Con esto reconocemos cuándo mueves plata entre tus propias cuentas, para no contarlo como
@@ -88,7 +88,7 @@ export function OnboardingForm({ defaults }: { defaults: OnboardingDefaults }) {
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3 text-sm">
+      <fieldset className="min-w-0 flex flex-col gap-3 text-sm">
         <legend className="mb-2 font-semibold">Tus datos</legend>
         <label className="flex items-start gap-2">
           <input type="checkbox" name="privacyAccepted" defaultChecked={defaults.privacyAccepted} required className="mt-1" />

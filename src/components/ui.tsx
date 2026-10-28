@@ -24,7 +24,8 @@ export function Field({
 }
 
 const control =
-  "rounded-md border border-border bg-background px-3 py-2 text-base outline-none focus:ring-2 focus:ring-accent";
+  "w-full min-w-0 rounded-md border border-border bg-background px-3 py-2 text-base outline-none focus:ring-2 focus:ring-accent " +
+  "file:mr-3 file:rounded file:border-0 file:bg-accent file:px-3 file:py-1 file:font-medium file:text-white dark:file:text-black";
 
 export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={control} />;

@@ -159,7 +159,7 @@ function Preview({
       </div>
 
       {(count("wallet_transfer") > 0 || personNames.length > 0) && (
-        <fieldset className="flex flex-col gap-3 rounded-lg border border-border p-4 text-sm">
+        <fieldset className="min-w-0 flex flex-col gap-3 rounded-lg border border-border p-4 text-sm">
           <legend className="px-1 font-semibold">¿Cuáles van a tus propias cuentas?</legend>
           <p className="text-muted">Lo que marques no cuenta como gasto: es plata que mueves entre tus cuentas.</p>
           {count("wallet_transfer") > 0 && (
