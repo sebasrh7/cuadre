@@ -14,8 +14,8 @@ export function IncomeSection({ year, incomeByMonth }: { year: number; incomeByM
   const maxIncome = Math.max(...incomeByMonth.map((m) => m.income), 1);
   return (
     <section className="flex flex-col gap-3">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Stat label={`Ingresos ${year} (${months.length} ${months.length === 1 ? "mes" : "meses"} con datos)`} value={formatCop(incomeYtd)} />
+      <div className="grid grid-cols-2 gap-3">
+        <Stat label={`Ingresos ${year} (${months.length} ${months.length === 1 ? "mes" : "meses"})`} value={formatCop(incomeYtd)} />
         <Stat label="Promedio mensual" value={formatCop(Math.round(incomeYtd / months.length))} />
       </div>
       <ul className="flex flex-col gap-1 text-sm">
@@ -125,7 +125,10 @@ export function ExpensesCard({
               <span className={category === UNCATEGORIZED ? "text-danger" : ""}>{category}</span>
               <span className="tabular-nums">
                 {formatCop(total)}
-                <span className="text-muted"> · {lastMonthLabel.toLowerCase()} {formatCop(month.get(category) ?? 0)}</span>
+                <span className="hidden text-muted sm:inline">
+                  {" "}
+                  · {lastMonthLabel.toLowerCase()} {formatCop(month.get(category) ?? 0)}
+                </span>
               </span>
             </div>
             <div className="h-1.5 rounded bg-border">
@@ -296,9 +299,9 @@ export function Sources({ sources }: { sources: { key: string; norm: string; url
 
 export function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="text-2xl font-semibold tabular-nums">{value}</p>
+    <div className="rounded-lg border border-border p-3 sm:p-4">
+      <p className="text-xs text-muted sm:text-sm">{label}</p>
+      <p className="text-lg font-semibold tabular-nums sm:text-2xl">{value}</p>
     </div>
   );
 }

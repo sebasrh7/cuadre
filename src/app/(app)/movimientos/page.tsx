@@ -59,20 +59,27 @@ async function MovementList() {
             </div>
             <ul className="flex flex-col divide-y divide-border rounded-lg border border-border text-sm">
               {movements.map((m) => (
-                <li key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2">
-                  <span className="text-muted tabular-nums">{m.occurred_on.slice(8)}</span>
-                  <span className="min-w-0 flex-1 truncate">{m.counterparty ?? "—"}</span>
-                  {m.kind === "expense" && m.counterparty ? (
-                    // La key lo vuelve a montar cuando la categoría cambia en el servidor.
-                    <CategorySelect key={m.category ?? ""} counterparty={m.counterparty} category={m.category} />
-                  ) : (
-                    <span className="text-muted">{m.category ?? KIND_LABELS[m.kind as keyof typeof KIND_LABELS]}</span>
-                  )}
+                // En el celular, dos líneas: comercio y monto arriba; día y categoría abajo.
+                <li
+                  key={m.id}
+                  className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-4 py-2 sm:grid-cols-[2rem_1fr_auto_auto]"
+                >
+                  <span className="hidden text-muted tabular-nums sm:inline">{m.occurred_on.slice(8)}</span>
+                  <span className="min-w-0 truncate">{m.counterparty ?? "—"}</span>
                   <span
-                    className={`tabular-nums ${m.kind === "own_transfer" ? "text-muted" : m.direction === "in" ? "text-accent" : ""}`}
+                    className={`text-right tabular-nums sm:order-last ${m.kind === "own_transfer" ? "text-muted" : m.direction === "in" ? "text-accent" : ""}`}
                   >
                     {m.direction === "in" ? "+" : "−"}
                     {formatCop(m.amount_cop)}
+                  </span>
+                  <span className="col-span-2 flex min-w-0 items-center gap-2 text-xs sm:col-span-1">
+                    <span className="text-muted tabular-nums sm:hidden">Día {Number(m.occurred_on.slice(8))} ·</span>
+                    {m.kind === "expense" && m.counterparty ? (
+                      // La key lo vuelve a montar cuando la categoría cambia en el servidor.
+                      <CategorySelect key={m.category ?? ""} counterparty={m.counterparty} category={m.category} />
+                    ) : (
+                      <span className="text-muted">{m.category ?? KIND_LABELS[m.kind as keyof typeof KIND_LABELS]}</span>
+                    )}
                   </span>
                 </li>
               ))}
