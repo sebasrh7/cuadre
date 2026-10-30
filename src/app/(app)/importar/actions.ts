@@ -17,7 +17,7 @@ const cents = z.number().int().safe();
 
 const importSchema = z.object({
   statement: z.object({
-    bank: z.enum(["bancolombia", "nequi"]),
+    bank: z.enum(["bancolombia", "nequi", "nu"]),
     from: isoDate,
     to: isoDate,
     accountLast4: z.string().regex(/^\d{4}$/),

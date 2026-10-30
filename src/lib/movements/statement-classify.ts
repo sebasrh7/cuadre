@@ -34,6 +34,7 @@ const EXPENSE_PREFIXES = [
 
 export function classifyStatementMovement(m: StatementMovement, bank: StatementBank = "bancolombia"): ClassifiedMovement {
   if (bank === "nequi") return classifyNequiMovement(m);
+  if (bank === "nu") return classifyNuMovement(m);
   const text = m.description.toUpperCase();
 
   if (text.startsWith("ABONO DE GIRO INTERNACIONAL")) {
@@ -70,6 +71,23 @@ function classifyNequiMovement(m: StatementMovement): ClassifiedMovement {
   const prefix = NEQUI_EXPENSE_PREFIXES.find((p) => p.test(text));
   const rest = prefix ? text.replace(prefix, "").trim() : text;
   return { kind: "expense", counterparty: rest || text || null };
+}
+
+function classifyNuMovement(m: StatementMovement): ClassifiedMovement {
+  const text = m.description.trim();
+
+  if (/^Rendimiento/i.test(text)) return { kind: "interest", counterparty: null };
+  // El pago de la tarjeta Nu sale de la misma persona: no es gasto ni ingreso.
+  if (/^Pagaste tu tarjeta/i.test(text)) return { kind: "self_transfer", counterparty: "Tarjeta Nu" };
+  if (/^Impuesto del 4x1000/i.test(text)) return { kind: "expense", counterparty: "Impuesto 4x1000" };
+
+  const person = /^(?:Recibiste de|Enviaste a)\s+(.+)$/i.exec(text);
+  if (person) return { kind: "person_transfer", counterparty: person[1].trim() };
+
+  if (m.amountCents > 0) return { kind: "other_income", counterparty: text || null };
+
+  const purchase = /^Compra en\s+(.+?)(?:\s+con tarjeta d[eé]bito)?$/i.exec(text);
+  return { kind: "expense", counterparty: purchase?.[1].trim() || text || null };
 }
 
 export interface MonthlyInterest {

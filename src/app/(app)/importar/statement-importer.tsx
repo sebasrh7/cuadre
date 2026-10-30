@@ -12,7 +12,7 @@ import { extractTextItems } from "@/lib/pdf/extract-text-items";
 import { importStatement, type ImportResult } from "./actions";
 
 const PROBLEMS: Record<StatementProblem, string> = {
-  not_a_statement: "Este PDF no parece un extracto de cuenta de Bancolombia ni de Nequi.",
+  not_a_statement: "Este PDF no parece un extracto de cuenta de Bancolombia, Nequi ni de la Cuenta Nu.",
   missing_summary: "No encontramos el resumen del extracto (saldo anterior, abonos, cargos).",
   summary_mismatch: "El resumen del extracto no cuadra. No guardamos nada para no meter datos malos.",
   totals_mismatch: "Los movimientos leídos no suman lo que dice el resumen. No guardamos nada.",
@@ -22,6 +22,7 @@ const PROBLEMS: Record<StatementProblem, string> = {
 const ACCOUNT_LABELS: Record<StatementBank, string> = {
   bancolombia: "cuenta de ahorros Bancolombia",
   nequi: "cuenta Nequi",
+  nu: "Cuenta Nu",
 };
 
 const KIND_LABELS: Record<StatementKind, string> = {
@@ -96,7 +97,7 @@ export function StatementImporter({ ownNames }: { ownNames: string[] }) {
       </Field>
       <Field
         label="Contraseña del PDF"
-        hint="Bancolombia y Nequi suelen usar tu número de documento. Solo se usa en tu navegador."
+        hint="Bancolombia, Nequi y Nu suelen usar tu número de documento. Solo se usa en tu navegador."
       >
         <Input name="password" type="password" autoComplete="off" autoFocus={step.needsPassword} />
       </Field>
