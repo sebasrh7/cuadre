@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as fx from "@/lib/parsers/__fixtures__/bancolombia-statement";
-import { parseBancolombiaStatement, type StatementMovement } from "@/lib/parsers/bancolombia-statement";
+import { parseBancolombiaStatement, type StatementMovement } from "@/lib/parsers/statement";
 import { classifyStatementMovement, groupMonthlyInterest } from "./statement-classify";
 
 const movement = (description: string, amountCents: number): StatementMovement => ({
@@ -47,5 +47,22 @@ describe("groupMonthlyInterest", () => {
       date: `2026-12-${String(i + 1).padStart(2, "0")}`,
     }));
     expect(groupMonthlyInterest(daily)).toEqual([{ month: "2026-12", lastDate: "2026-12-10", pesos: 5 }]);
+  });
+});
+
+describe("classifyStatementMovement (Nequi)", () => {
+  it.each([
+    ["Recarga desde Bancolombia", 20_000_000, "self_transfer", "Bancolombia"],
+    ["Pago de Intereses", 4_567, "interest", null],
+    ["De ANA PRUEBA", 15_000_000, "person_transfer", "ANA PRUEBA"],
+    ["Para ANDRES PRUEBA EJEMPLO", -10_000_000, "person_transfer", "ANDRES PRUEBA EJEMPLO"],
+    ["ENVIO CON BRE-B A: LAURA EJEMPLO", -8_000_000, "person_transfer", "LAURA EJEMPLO"],
+    ["PAGO EN QR BRE-B: PANADERIA EJEMPLO", -1_250_000, "expense", "PANADERIA EJEMPLO"],
+    ["COMPRA PIN PTM NETFLIX", -2_690_000, "expense", "NETFLIX"],
+    ["Pago en TIGO FACTURAS EE", -6_000_000, "expense", "TIGO FACTURAS EE"],
+    ["Pago PTM Acueducto Ejemplo SA", -5_000_000, "expense", "Acueducto Ejemplo SA"],
+    ["CLARO", -4_000_000, "expense", "CLARO"],
+  ])("%s → %s", (description, amount, kind, counterparty) => {
+    expect(classifyStatementMovement(movement(description, amount), "nequi")).toEqual({ kind, counterparty });
   });
 });
