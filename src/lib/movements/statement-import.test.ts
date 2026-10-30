@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import * as fx from "@/lib/parsers/__fixtures__/bancolombia-statement";
 import * as nequiFx from "@/lib/parsers/__fixtures__/nequi-statement";
 import * as nuFx from "@/lib/parsers/__fixtures__/nu-account-statement";
+import * as nuCardFx from "@/lib/parsers/__fixtures__/nu-card-statement";
 import { parseBancolombiaStatement, parseStatement, type Statement } from "@/lib/parsers/statement";
 import {
   planStatementImport,
@@ -176,5 +177,29 @@ describe("planStatementImport (Cuenta Nu)", () => {
     });
     expect(plan.every((m) => m.dedupeKey.includes("nu|"))).toBe(true);
     expect(plan).toHaveLength(7);
+  });
+});
+
+describe("planStatementImport (tarjeta de crédito Nu)", () => {
+  const result = parseStatement(nuCardFx.buildNuCardStatement());
+  if (!result.ok) throw new Error(result.problem);
+  const plan = planStatementImport(result.statement, decisions);
+
+  it("el pago de la tarjeta es entre cuentas propias: no es ingreso", () => {
+    expect(plan.find((m) => m.counterparty === "Pago tarjeta Nu")).toMatchObject({ kind: "own_transfer", direction: "in" });
+  });
+
+  it("las compras y los intereses son gastos", () => {
+    expect(plan.filter((m) => m.kind === "expense").map((m) => [m.counterparty, m.amountCop])).toEqual([
+      ["Celulares Ejemplo", 900_000],
+      ["Spotify", 26_900],
+      ["Intereses tarjeta Nu", 5970],
+      ["Cargos tarjeta Nu", 4000],
+    ]);
+  });
+
+  it("la clave de una compra a cuotas no depende del extracto en que aparece", () => {
+    const key = plan.find((m) => m.counterparty === "Celulares Ejemplo")?.dedupeKey;
+    expect(key).toBe("statement|nu_card|4321|2026-08-20|-90000000|Celulares Ejemplo Pago*Tienda Celulares|0");
   });
 });

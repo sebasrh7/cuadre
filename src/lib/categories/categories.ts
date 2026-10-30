@@ -62,6 +62,7 @@ const KEYWORD_RULES: [RegExp, ExpenseCategory][] = [
 const EXACT_RULES: [RegExp, ExpenseCategory][] = [
   [/^RETIRO EN CAJERO$/, "Efectivo"],
   [/^SUC VIRTUAL$/, "Transferencias"],
+  [/^(INTERESES|COMISIONES|CARGOS) TARJETA NU$/, "Otros"],
 ];
 
 export function categoryByKeyword(key: string): ExpenseCategory | null {

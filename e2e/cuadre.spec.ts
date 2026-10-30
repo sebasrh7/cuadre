@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { buildNequiStatement } from "../src/lib/parsers/__fixtures__/nequi-statement";
 import { buildNuAccountStatement } from "../src/lib/parsers/__fixtures__/nu-account-statement";
+import { buildNuCardStatement } from "../src/lib/parsers/__fixtures__/nu-card-statement";
 import { buildStatementPdf } from "../src/lib/parsers/__fixtures__/statement-pdf";
 import { STORAGE_STATE } from "./global-setup";
 
@@ -150,6 +151,21 @@ test.describe("flujo completo de un usuario", () => {
     await expect(page.getByText("7 movimientos nuevos")).toBeVisible();
   });
 
+  test("importa un extracto de la tarjeta de crédito Nu", async ({ page }) => {
+    await page.goto("/importar");
+    await page.getByLabel("Extracto (PDF)").setInputFiles({
+      name: "nu-tarjeta.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from(await buildStatementPdf(buildNuCardStatement())),
+    });
+    await page.getByRole("button", { name: "Leer extracto" }).click();
+    await expect(page.getByText("✓ El extracto cuadra.")).toBeVisible();
+    await expect(page.getByText(/5 movimientos del 2026-08-29 al 2026-09-28, tarjeta de crédito Nu \*4321/)).toBeVisible();
+    await page.getByRole("button", { name: "Guardar movimientos" }).click();
+    // 2 compras + el pago + intereses + cargos.
+    await expect(page.getByText("5 movimientos nuevos")).toBeVisible();
+  });
+
   test("los movimientos quedan agrupados por mes", async ({ page }) => {
     await page.goto("/movimientos");
     await expect(page.getByRole("heading", { name: "Diciembre de 2026" })).toBeVisible();
@@ -164,8 +180,8 @@ test.describe("flujo completo de un usuario", () => {
     expect(response.status()).toBe(200);
     const csv = await response.text();
     expect(csv).toContain("Fecha;Tipo;Valor (COP)");
-    // Encabezado + 6 de Bancolombia + 8 de Nequi + 7 de Nu.
-    expect(csv.trim().split("\r\n")).toHaveLength(22);
+    // Encabezado + 6 de Bancolombia + 8 de Nequi + 7 de la Cuenta Nu + 5 de la tarjeta Nu.
+    expect(csv.trim().split("\r\n")).toHaveLength(27);
   });
 
   test("borra la cuenta y todos sus datos", async ({ page }) => {
