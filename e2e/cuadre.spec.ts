@@ -175,6 +175,21 @@ test.describe("flujo completo de un usuario", () => {
     await expect(page.getByText("alerta", { exact: true })).toHaveCount(0);
   });
 
+  test("el patrimonio suma los saldos de cierre de los extractos y los bienes", async ({ page }) => {
+    await page.goto("/patrimonio");
+    // Bancolombia 4.091.602 + Nequi 570.646 + Cuenta Nu 1.249.835; la tarjeta es deuda y no suma.
+    await expect(page.getByText(/5\.912\.083/).first()).toBeVisible();
+
+    await page.getByLabel("Tipo de bien").selectOption("vehicle");
+    await page.getByLabel("Nombre (opcional)").fill("Moto");
+    await page.getByLabel("Valor aproximado en pesos").fill("30000000");
+    await page.getByRole("button", { name: "Agregar bien" }).click();
+    await expect(page.getByText(/35\.912\.083/).first()).toBeVisible();
+
+    await page.goto("/inicio");
+    await expect(page.getByText("Patrimonio bruto (saldos y bienes registrados)")).toBeVisible();
+  });
+
   test("exporta los movimientos a CSV", async ({ page }) => {
     const response = await page.request.get("/cuenta/exportar/movimientos");
     expect(response.status()).toBe(200);
