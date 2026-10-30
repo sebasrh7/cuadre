@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireConsentedUser } from "@/lib/auth";
 import { formatCop } from "@/lib/money/format";
-import { CategorizeButton, CategorySelect } from "./category-controls";
+import { CategorizeButton, CategorySelect, IncomeToggle } from "./category-controls";
 
-const KIND_LABELS = { income: "Ingreso", expense: "Gasto", own_transfer: "Entre mis cuentas" } as const;
+const KIND_LABELS = { income: "Ingreso", expense: "Gasto", own_transfer: "Entre mis cuentas", received: "Recibido" } as const;
 
 export default function MovementsPage() {
   return (
@@ -59,7 +59,9 @@ async function MovementList() {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-semibold">{monthName(month)}</h2>
               <p className="text-sm text-muted tabular-nums">
-                Ingresos {formatCop(total("income"))} · Gastos {formatCop(total("expense"))}
+                Ingresos {formatCop(total("income"))}
+                {total("received") > 0 && ` · Recibido sin clasificar ${formatCop(total("received"))}`} · Gastos{" "}
+                {formatCop(total("expense"))}
               </p>
             </div>
             <ul className="flex flex-col divide-y divide-border rounded-lg border border-border text-sm">
@@ -87,7 +89,9 @@ async function MovementList() {
                         alerta
                       </span>
                     )}
-                    {m.kind === "expense" && m.counterparty ? (
+                    {(m.kind === "received" || m.kind === "income") && !m.category && m.source !== "manual" ? (
+                      <IncomeToggle key={m.kind} id={m.id} isIncome={m.kind === "income"} />
+                    ) : m.kind === "expense" && m.counterparty ? (
                       // La key lo vuelve a montar cuando la categoría cambia en el servidor.
                       <CategorySelect key={m.category ?? ""} counterparty={m.counterparty} category={m.category} />
                     ) : (

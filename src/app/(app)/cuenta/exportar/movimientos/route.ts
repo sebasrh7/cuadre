@@ -9,7 +9,7 @@ export async function GET() {
     .order("occurred_on");
   if (error) return new Response("No pudimos exportar tus movimientos.", { status: 500 });
 
-  const kinds = { income: "Ingreso", expense: "Gasto", own_transfer: "Entre mis cuentas" } as const;
+  const kinds = { income: "Ingreso", expense: "Gasto", own_transfer: "Entre mis cuentas", received: "Recibido (sin clasificar)" } as const;
   const header = ["Fecha", "Tipo", "Valor (COP)", "Comercio o persona", "Categoría", "Fuente", "Cuenta"];
   const rows = data.map((m) => [
     m.occurred_on,

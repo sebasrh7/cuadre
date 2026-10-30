@@ -34,8 +34,8 @@ describe("planAlertImport", () => {
     expect(plan[2]).toMatchObject({ kind: "expense", category: "Transferencias", counterparty: "Laura Gómez Pérez" });
   });
 
-  it("registra lo recibido de un tercero como ingreso", () => {
-    expect(plan[4]).toMatchObject({ kind: "income", direction: "in", counterparty: "JUAN PEREZ RAMIREZ", category: null });
+  it("lo recibido de un tercero queda sin clasificar: no se sabe si es ingreso", () => {
+    expect(plan[4]).toMatchObject({ kind: "received", direction: "in", counterparty: "JUAN PEREZ RAMIREZ", category: null });
   });
 
   it("la misma alerta pegada dos veces tiene la misma clave", () => {

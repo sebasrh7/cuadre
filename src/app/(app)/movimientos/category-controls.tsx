@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { EXPENSE_CATEGORIES, UNCATEGORIZED, type ExpenseCategory } from "@/lib/categories/categories";
 import type { CategorizeSummary } from "@/lib/categories/apply";
-import { categorizePending, changeCategory } from "./actions";
+import { categorizePending, changeCategory, markAsIncome } from "./actions";
 
 /** Cambia la categoría de un comercio: aplica a todos sus gastos. */
 export function CategorySelect({ counterparty, category }: { counterparty: string; category: string | null }) {
@@ -25,6 +25,22 @@ export function CategorySelect({ counterparty, category }: { counterparty: strin
         </option>
       ))}
     </select>
+  );
+}
+
+/** Lo recibido de personas no cuenta como ingreso hasta que el usuario lo diga. */
+export function IncomeToggle({ id, isIncome }: { id: string; isIncome: boolean }) {
+  const [pending, start] = useTransition();
+  return (
+    <label className={`flex items-center gap-1 ${isIncome ? "text-accent" : "text-muted"}`}>
+      <input
+        type="checkbox"
+        checked={isIncome}
+        disabled={pending}
+        onChange={(e) => start(() => markAsIncome({ id, isIncome: e.target.checked }))}
+      />
+      Es ingreso
+    </label>
   );
 }
 
