@@ -7,8 +7,10 @@ import { pilaBusinessDay, upcomingPilaDues } from "@/lib/dates/pila";
 import { DeadlinesCard, ExpensesCard, IncomeSection, RentaCard, SocialSecurityCard, Sources, monthName } from "./cards";
 import { DeclareIncomeForm } from "./declare-income-form";
 import { DECLARED_INCOME_CATEGORY, suggestedIncome } from "@/lib/movements/declared-income";
+import { TRANSFER_CATEGORY } from "@/lib/movements/statement-import";
 import { loadTaxRules } from "@/lib/tax/load";
 import { checkRenta, unmeasuredRentaThresholds } from "@/lib/tax/renta";
+import { patrimonioTotal } from "@/lib/tax/patrimonio";
 import { estimateSocialSecurity } from "@/lib/tax/social-security";
 
 export default function HomePage() {
@@ -26,14 +28,16 @@ async function Dashboard() {
   const { supabase, profile } = await requireConsentedUser();
 
   const year = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric" }).format(new Date()));
-  const [{ data: movements }, taxRules, { data: pilaRules }] = await Promise.all([
+  const [{ data: movements }, taxRules, { data: pilaRules }, { data: accounts }, { data: assets }] = await Promise.all([
     supabase
       .from("movements")
-      .select("occurred_on, amount_cop, direction, kind, category, source")
+      .select("occurred_on, amount_cop, direction, kind, category, source, account_last4")
       .gte("occurred_on", `${year}-01-01`)
       .lte("occurred_on", `${year}-12-31`),
     loadTaxRules(supabase, year),
     supabase.from("pila_deadlines").select("digits_from, digits_to, business_day"),
+    supabase.from("own_accounts").select("kind, last4, balance_cop"),
+    supabase.from("assets").select("value_cop"),
   ]);
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
   const host = (await headers()).get("host");
@@ -78,9 +82,34 @@ async function Dashboard() {
   const lastMonth = incomeByMonth.at(-1)!;
   const completeMonths = incomeByMonth.filter((m) => m.complete);
   const unclassified = movements.filter((m) => m.kind === "received").reduce((t, m) => t + m.amount_cop, 0);
+  const expenses = movements.filter((m) => m.kind === "expense");
+  // Compras y consumos: los gastos menos lo enviado a personas (puede no ser un consumo).
+  const purchasesYtd = expenses.filter((m) => m.category !== TRANSFER_CATEGORY).reduce((t, m) => t + m.amount_cop, 0);
+  const cardLast4 = new Set((accounts ?? []).filter((a) => a.kind === "credit_card").map((a) => a.last4));
+  const creditCardYtd = cardLast4.size
+    ? expenses.filter((m) => m.account_last4 && cardLast4.has(m.account_last4)).reduce((t, m) => t + m.amount_cop, 0)
+    : undefined;
+  const patrimonio = patrimonioTotal(
+    (accounts ?? []).map((a) => ({ kind: a.kind, balanceCop: a.balance_cop })),
+    (assets ?? []).map((a) => ({ valueCop: a.value_cop })),
+  );
   const lastCompleteMonth = completeMonths.at(-1);
   const suggestion = suggestedIncome(incomeByMonth.filter((m) => m.complete && !m.declared).map((m) => m.income));
   const pilaMonth = nextPila ? incomeByMonth.find((m) => m.month === nextPila.periodMonth) : undefined;
+
+  const rentaChecks = taxRules
+    ? checkRenta(
+        {
+          incomeYtd,
+          depositsYtd,
+          monthsWithData: completeMonths.length || months.length,
+          purchasesYtd,
+          creditCardYtd,
+          patrimonio: patrimonio ?? undefined,
+        },
+        taxRules.rules,
+      )
+    : [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -136,11 +165,11 @@ async function Dashboard() {
           )}
           <RentaCard
             year={year}
-            checks={checkRenta(
-              { incomeYtd, depositsYtd, monthsWithData: completeMonths.length || months.length },
+            checks={rentaChecks}
+            unmeasured={unmeasuredRentaThresholds(
               taxRules.rules,
+              rentaChecks.map((c) => c.key),
             )}
-            unmeasured={unmeasuredRentaThresholds(taxRules.rules)}
             uvt={taxRules.rules.uvt}
           />
           <Sources sources={taxRules.rules.sources} />

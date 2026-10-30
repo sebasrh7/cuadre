@@ -280,6 +280,9 @@ const STATUS: Record<RentaCheck["status"], { label: string; className: string }>
 const CHECK_LABELS: Record<RentaCheck["key"], string> = {
   ingresos: "Ingresos brutos",
   consignaciones: "Consignaciones y depósitos (incluye transferencias propias)",
+  compras: "Compras y consumos (sin lo enviado a personas)",
+  tarjeta: "Consumos con tarjeta de crédito",
+  patrimonio: "Patrimonio bruto (saldos y bienes registrados)",
 };
 
 export function RentaCard({
@@ -290,7 +293,7 @@ export function RentaCard({
 }: {
   year: number;
   checks: RentaCheck[];
-  unmeasured: { label: string; threshold: number }[];
+  unmeasured: { key: string; label: string; threshold: number }[];
   uvt: number;
 }) {
   return (
@@ -313,7 +316,19 @@ export function RentaCard({
               />
             </div>
             <p className="text-xs text-muted tabular-nums">
-              Llevas {formatCop(c.actual)} · proyección del año {formatCop(c.projected)} · tope {formatCop(c.threshold)}
+              {c.key === "patrimonio" ? (
+                <>
+                  Tienes {formatCop(c.actual)} · tope {formatCop(c.threshold)} al 31 de diciembre ·{" "}
+                  <Link href="/patrimonio" className="underline">
+                    actualizar
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Llevas {formatCop(c.actual)} · proyección del año {formatCop(c.projected)} · tope{" "}
+                  {formatCop(c.threshold)}
+                </>
+              )}
             </p>
           </li>
         ))}
@@ -323,7 +338,17 @@ export function RentaCard({
         <ul className="mt-2 flex flex-col gap-1">
           {unmeasured.map((t) => (
             <li key={t.label} className="flex justify-between gap-2">
-              <span>{t.label}</span>
+              <span>
+                {t.label}
+                {t.key === "patrimonio" && (
+                  <>
+                    {" · "}
+                    <Link href="/patrimonio" className="text-accent underline">
+                      regístralo
+                    </Link>
+                  </>
+                )}
+              </span>
               <span className="tabular-nums">{formatCop(t.threshold)}</span>
             </li>
           ))}

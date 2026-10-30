@@ -89,4 +89,20 @@ describe("checkRenta", () => {
   it("lista los topes que la app no puede medir", () => {
     expect(unmeasuredRentaThresholds(rules).map((t) => t.threshold)).toEqual([235_683_000, 73_323_600, 73_323_600]);
   });
+
+  it("mide compras, tarjeta y patrimonio cuando tiene los datos", () => {
+    const checks = checkRenta(
+      { incomeYtd: 0, depositsYtd: 0, monthsWithData: 3, purchasesYtd: 6_000_000, creditCardYtd: 900_000, patrimonio: 240_000_000 },
+      rules,
+    );
+    expect(checks.map((c) => c.key)).toEqual(["ingresos", "consignaciones", "compras", "tarjeta", "patrimonio"]);
+    expect(checks.find((c) => c.key === "compras")?.projected).toBe(24_000_000);
+    expect(checks.find((c) => c.key === "patrimonio")).toMatchObject({ projected: 240_000_000, status: "exceeded" });
+    expect(unmeasuredRentaThresholds(rules, checks.map((c) => c.key))).toEqual([]);
+  });
+
+  it("el patrimonio no se proyecta: se compara tal cual con el tope", () => {
+    const [, , patrimonio] = checkRenta({ incomeYtd: 0, depositsYtd: 0, monthsWithData: 1, patrimonio: 50_000_000 }, rules);
+    expect(patrimonio).toMatchObject({ key: "patrimonio", projected: 50_000_000, status: "far" });
+  });
 });
