@@ -11,8 +11,11 @@ import { estimateSocialSecurity } from "@/lib/tax/social-security";
 export function IncomeSection({
   year,
   incomeByMonth,
+  unclassified = 0,
 }: {
   year: number;
+  /** Lo recibido de personas que el usuario no ha marcado como ingreso. */
+  unclassified?: number;
   /** `complete: false`: mes sin extracto (solo alertas); no entra en el promedio. */
   incomeByMonth: { month: string; income: number; complete?: boolean }[];
 }) {
@@ -45,6 +48,16 @@ export function IncomeSection({
           </li>
         ))}
       </ul>
+      {unclassified > 0 && (
+        <p className="rounded-lg border border-border p-3 text-sm">
+          Recibiste {formatCop(unclassified)} de personas que no cuentan como ingreso: puede ser plata que te
+          devolvieron o efectivo que cambiaste. Si algo fue pago por tu trabajo,{" "}
+          <Link href="/movimientos" className="text-accent underline">
+            márcalo como ingreso
+          </Link>
+          .
+        </p>
+      )}
       <p className="text-xs text-muted">
         Ingresos = lo que entra a tus cuentas sin contar transferencias entre ellas.{" "}
         {partial.length > 0 &&

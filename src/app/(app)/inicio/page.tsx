@@ -68,11 +68,12 @@ async function Dashboard() {
   const depositsYtd = movements.filter((m) => m.direction === "in").reduce((t, m) => t + m.amount_cop, 0);
   const lastMonth = incomeByMonth.at(-1)!;
   const completeMonths = incomeByMonth.filter((m) => m.complete);
+  const unclassified = movements.filter((m) => m.kind === "received").reduce((t, m) => t + m.amount_cop, 0);
   const lastCompleteMonth = completeMonths.at(-1);
 
   return (
     <div className="flex flex-col gap-8">
-      <IncomeSection year={year} incomeByMonth={incomeByMonth} />
+      <IncomeSection year={year} incomeByMonth={incomeByMonth} unclassified={unclassified} />
 
       {nextPila && (
         <DeadlinesCard
