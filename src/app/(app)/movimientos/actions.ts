@@ -13,6 +13,28 @@ export async function categorizePending(): Promise<CategorizeSummary> {
   return summary;
 }
 
+const incomeSchema = z.object({ id: z.uuid(), isIncome: z.boolean() });
+
+/**
+ * Lo recibido de una persona se marca (o desmarca) como ingreso. Solo cambia
+ * entre `received` e `income` en movimientos que entran y no tienen categoría:
+ * los giros y los intereses no se tocan.
+ */
+export async function markAsIncome(input: z.input<typeof incomeSchema>) {
+  const parsed = incomeSchema.safeParse(input);
+  if (!parsed.success) return;
+  const { supabase } = await requireConsentedUser();
+  await supabase
+    .from("movements")
+    .update({ kind: parsed.data.isIncome ? "income" : "received" })
+    .eq("id", parsed.data.id)
+    .eq("direction", "in")
+    .is("category", null)
+    .in("kind", ["income", "received"])
+    .neq("source", "manual");
+  refresh();
+}
+
 const changeSchema = z.object({
   counterparty: z.string().min(1).max(120),
   category: z.enum(EXPENSE_CATEGORIES),

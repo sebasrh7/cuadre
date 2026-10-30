@@ -139,8 +139,12 @@ describe("planStatementImport (Nequi)", () => {
     expect(plan.find((m) => m.counterparty === "Bancolombia")).toMatchObject({ kind: "own_transfer", category: null });
   });
 
-  it("lo recibido de otra persona es ingreso, sin categoría de transferencia", () => {
-    expect(plan.find((m) => m.counterparty === "ANA PRUEBA")).toMatchObject({ kind: "income", category: null });
+  it("lo recibido de otra persona queda sin clasificar, sin categoría de transferencia", () => {
+    expect(plan.find((m) => m.counterparty === "ANA PRUEBA")).toMatchObject({ kind: "received", category: null });
+  });
+
+  it("los intereses sí son ingreso", () => {
+    expect(plan.find((m) => m.category === "Intereses")?.kind).toBe("income");
   });
 
   it("lo enviado a otra persona es gasto en Transferencias, y a sí mismo es propio", () => {

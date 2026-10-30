@@ -21,7 +21,8 @@ export interface PlannedMovement {
   occurredOn: string;
   amountCop: number;
   direction: "in" | "out";
-  kind: "income" | "expense" | "own_transfer";
+  /** `received`: entró plata que no se sabe si es ingreso (de una persona, un abono sin identificar). */
+  kind: "income" | "expense" | "own_transfer" | "received";
   counterparty: string | null;
   category: string | null;
   accountLast4: string;
@@ -63,7 +64,7 @@ export function planStatementImport(statement: Statement, decisions: ImportDecis
       occurredOn: m.date,
       amountCop: pesos,
       direction,
-      kind: isOwn ? "own_transfer" : direction === "in" ? "income" : "expense",
+      kind: isOwn ? "own_transfer" : direction === "out" ? "expense" : kind === "foreign_income" ? "income" : "received",
       counterparty,
       category: isOwn ? null : categoryFor(kind, counterparty, direction),
       accountLast4: last4,

@@ -27,7 +27,8 @@ export function planAlertImport(alerts: BancolombiaAlert[], own: OwnIdentity): P
       occurredAtTime: alert.time,
       amountCop: alert.amountCop,
       direction,
-      kind: isOwn ? "own_transfer" : direction === "in" ? "income" : "expense",
+      // Una transferencia recibida puede ser un pago, una deuda o un cambio de efectivo: lo decide el usuario.
+      kind: isOwn ? "own_transfer" : direction === "in" ? "received" : "expense",
       counterparty,
       // Pagos a personas o cuentas: se categorizan aquí para que esos nombres nunca lleguen a la IA.
       category: !isOwn && direction === "out" && alert.kind !== "card_purchase" ? TRANSFER_CATEGORY : null,
