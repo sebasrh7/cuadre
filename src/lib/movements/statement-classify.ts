@@ -98,7 +98,7 @@ function classifyNuMovement(m: StatementMovement): ClassifiedMovement {
   if (m.amountCents > 0) return { kind: "other_income", counterparty: text || null };
 
   const purchase = /^Compra en\s+(.+?)(?:\s+con tarjeta d[eé]bito)?$/i.exec(text);
-  return { kind: "expense", counterparty: purchase?.[1].trim() || text || null };
+  return { kind: "expense", counterparty: withoutProcessor(purchase?.[1].trim() || text) || null };
 }
 
 function classifyNuCardMovement(m: StatementMovement): ClassifiedMovement {
@@ -108,10 +108,13 @@ function classifyNuCardMovement(m: StatementMovement): ClassifiedMovement {
   if (/^Pago$/i.test(text)) return { kind: "self_transfer", counterparty: "Pago tarjeta Nu" };
   if (m.amountCents > 0) return { kind: "other_income", counterparty: text || null };
 
-  // `Spotify Pago*Spotify Bogota`: primero el nombre del comercio, luego el descriptor del pago.
-  const descriptor = /^(.*?)\s*\S+\*(.+)$/.exec(text);
-  const merchant = descriptor ? descriptor[1] || descriptor[2] : text;
-  return { kind: "expense", counterparty: merchant.trim() || text || null };
+  return { kind: "expense", counterparty: withoutProcessor(text) || null };
+}
+
+/** `Mercado Pago*Mercadoli`, `MERPAGO*TRAJE`: antes del `*` va la pasarela de pago; después, el comercio. */
+function withoutProcessor(text: string): string {
+  const merchant = /\*\s*(.+)$/.exec(text)?.[1].trim();
+  return merchant || text;
 }
 
 export interface MonthlyInterest {

@@ -75,6 +75,7 @@ describe("classifyStatementMovement (Cuenta Nu)", () => {
     ["Recibiste de ANA PRUEBA", 40_000_000, "person_transfer", "ANA PRUEBA"],
     ["Pagaste tu tarjeta", -30_000_000, "self_transfer", "Tarjeta Nu"],
     ["Compra en FERRETERIA EJEMPLO con tarjeta débito", -5_000_000, "expense", "FERRETERIA EJEMPLO"],
+    ["Compra en MERPAGO*TIENDA EJEMPLO con tarjeta débito", -5_000_000, "expense", "TIENDA EJEMPLO"],
     ["Impuesto del 4x1000", -20_000, "expense", "Impuesto 4x1000"],
     ["Rendimiento total de tu cuenta", 123_456, "interest", null],
     ["Cobro por retiro", -1_000_000, "expense", "Cobro por retiro"],
@@ -86,7 +87,8 @@ describe("classifyStatementMovement (Cuenta Nu)", () => {
 describe("classifyStatementMovement (tarjeta de crédito Nu)", () => {
   it.each([
     ["Pago", 65_000_000, "self_transfer", "Pago tarjeta Nu"],
-    ["Spotify Pago*Spotify Bogota", -2_690_000, "expense", "Spotify"],
+    ["Spotify Pago*Spotify Bogota", -2_690_000, "expense", "Spotify Bogota"],
+    ["Mercado Pago*Mercadoli", -29_999_000, "expense", "Mercadoli"],
     ["Pago*Tienda Celulares", -90_000_000, "expense", "Tienda Celulares"],
     ["Intereses tarjeta Nu", -597_000, "expense", "Intereses tarjeta Nu"],
   ])("%s → %s", (description, amount, kind, counterparty) => {
