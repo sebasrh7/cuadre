@@ -1,5 +1,5 @@
 import { centsToPesos } from "@/lib/parsers/amount";
-import type { Statement } from "@/lib/parsers/bancolombia-statement";
+import type { Statement } from "@/lib/parsers/statement";
 import { normalizeName } from "./own-transfer";
 import { classifyStatementMovement, groupMonthlyInterest, type StatementKind } from "./statement-classify";
 
@@ -41,7 +41,7 @@ export function planStatementImport(statement: Statement, decisions: ImportDecis
   const seen = new Map<string, number>();
 
   for (const m of statement.movements) {
-    const { kind, counterparty } = classifyStatementMovement(m);
+    const { kind, counterparty } = classifyStatementMovement(m, statement.bank);
     if (kind === "interest") continue;
 
     const pesos = centsToPesos(Math.abs(m.amountCents));
@@ -49,10 +49,13 @@ export function planStatementImport(statement: Statement, decisions: ImportDecis
 
     const direction = m.amountCents > 0 ? "in" : "out";
     const isOwn =
+      kind === "self_transfer" ||
       (kind === "wallet_transfer" && decisions.nequiIsOwn) ||
       (kind === "person_transfer" && counterparty !== null && ownNames.has(normalizeName(counterparty)));
 
-    const base = `statement|${last4}|${m.date}|${m.amountCents}|${m.description}`;
+    // Bancolombia conserva su formato original de clave (no cambiar: rompería el dedupe).
+    const source = statement.bank === "bancolombia" ? "statement" : `statement|${statement.bank}`;
+    const base = `${source}|${last4}|${m.date}|${m.amountCents}|${m.description}`;
     const occurrence = seen.get(base) ?? 0;
     seen.set(base, occurrence + 1);
 
@@ -62,13 +65,13 @@ export function planStatementImport(statement: Statement, decisions: ImportDecis
       direction,
       kind: isOwn ? "own_transfer" : direction === "in" ? "income" : "expense",
       counterparty,
-      category: isOwn ? null : categoryFor(kind, counterparty),
+      category: isOwn ? null : categoryFor(kind, counterparty, direction),
       accountLast4: last4,
       dedupeKey: `${base}|${occurrence}`,
     });
   }
 
-  for (const interest of groupMonthlyInterest(statement.movements)) {
+  for (const interest of groupMonthlyInterest(statement.movements, statement.bank)) {
     if (interest.pesos <= 0) continue;
     planned.push({
       occurredOn: interest.lastDate,
@@ -78,16 +81,20 @@ export function planStatementImport(statement: Statement, decisions: ImportDecis
       counterparty: "Bancolombia",
       category: INTEREST_CATEGORY,
       accountLast4: last4,
-      dedupeKey: `statement-interest|${last4}|${interest.month}`,
+      dedupeKey:
+        statement.bank === "bancolombia"
+          ? `statement-interest|${last4}|${interest.month}`
+          : `statement-interest|${statement.bank}|${last4}|${interest.month}`,
     });
   }
 
   return planned.sort((a, b) => a.occurredOn.localeCompare(b.occurredOn));
 }
 
-function categoryFor(kind: StatementKind, counterparty: string | null): string | null {
+function categoryFor(kind: StatementKind, counterparty: string | null, direction: "in" | "out"): string | null {
   if (kind === "foreign_income") return FOREIGN_INCOME_CATEGORY;
-  if (kind === "person_transfer" || kind === "wallet_transfer") return TRANSFER_CATEGORY;
+  // Lo recibido de otra persona es un ingreso, no un gasto en transferencias.
+  if ((kind === "person_transfer" || kind === "wallet_transfer") && direction === "out") return TRANSFER_CATEGORY;
   if (kind === "expense" && counterparty === "Retiro en cajero") return CASH_CATEGORY;
   // El resto de gastos queda sin categoría: lo resuelven las reglas o la IA.
   return null;

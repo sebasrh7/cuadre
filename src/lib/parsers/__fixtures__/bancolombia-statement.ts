@@ -4,7 +4,7 @@
 //
 // El periodo cruza de año (diciembre → enero) para probar la asignación del año.
 
-import type { TextItem } from "../bancolombia-statement";
+import type { TextItem } from "../statement";
 
 type Cell = [x: number, str: string];
 

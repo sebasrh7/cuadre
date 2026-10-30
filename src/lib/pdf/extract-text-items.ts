@@ -1,4 +1,4 @@
-import type { TextItem } from "@/lib/parsers/bancolombia-statement";
+import type { TextItem } from "@/lib/parsers/statement";
 
 export type ExtractResult =
   | { ok: true; items: TextItem[] }

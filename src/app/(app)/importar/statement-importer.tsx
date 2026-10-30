@@ -7,22 +7,28 @@ import { classifyStatementMovement, type StatementKind } from "@/lib/movements/s
 import { matchesOwnName } from "@/lib/movements/own-transfer";
 import { formatCop } from "@/lib/money/format";
 import { centsToPesos } from "@/lib/parsers/amount";
-import { parseBancolombiaStatement, type Statement, type StatementProblem } from "@/lib/parsers/bancolombia-statement";
+import { parseStatement, type Statement, type StatementBank, type StatementProblem } from "@/lib/parsers/statement";
 import { extractTextItems } from "@/lib/pdf/extract-text-items";
 import { importStatement, type ImportResult } from "./actions";
 
 const PROBLEMS: Record<StatementProblem, string> = {
-  not_a_statement: "Este PDF no parece un extracto de cuenta de ahorros de Bancolombia.",
+  not_a_statement: "Este PDF no parece un extracto de cuenta de Bancolombia ni de Nequi.",
   missing_summary: "No encontramos el resumen del extracto (saldo anterior, abonos, cargos).",
   summary_mismatch: "El resumen del extracto no cuadra. No guardamos nada para no meter datos malos.",
   totals_mismatch: "Los movimientos leídos no suman lo que dice el resumen. No guardamos nada.",
   balance_mismatch: "Los saldos de los movimientos no encadenan. No guardamos nada.",
 };
 
+const ACCOUNT_LABELS: Record<StatementBank, string> = {
+  bancolombia: "cuenta de ahorros Bancolombia",
+  nequi: "cuenta Nequi",
+};
+
 const KIND_LABELS: Record<StatementKind, string> = {
   foreign_income: "Ingreso del exterior",
   interest: "Intereses",
   wallet_transfer: "A Nequi",
+  self_transfer: "Entre mis cuentas",
   person_transfer: "Transferencia",
   expense: "Gasto",
   other_income: "Otro ingreso",
@@ -64,7 +70,7 @@ export function StatementImporter({ ownNames }: { ownNames: string[] }) {
         });
         return;
       }
-      const parsed = parseBancolombiaStatement(extracted.items);
+      const parsed = parseStatement(extracted.items);
       setStep(parsed.ok ? { name: "preview", statement: parsed.statement } : { name: "pick", error: PROBLEMS[parsed.problem] });
     } finally {
       setReading(false);
@@ -90,7 +96,7 @@ export function StatementImporter({ ownNames }: { ownNames: string[] }) {
       </Field>
       <Field
         label="Contraseña del PDF"
-        hint="Bancolombia suele usar tu número de documento. Solo se usa en tu navegador."
+        hint="Bancolombia y Nequi suelen usar tu número de documento. Solo se usa en tu navegador."
       >
         <Input name="password" type="password" autoComplete="off" autoFocus={step.needsPassword} />
       </Field>
@@ -112,7 +118,7 @@ function Preview({
   onSaved: (result: Extract<ImportResult, { ok: true }>) => void;
 }) {
   const classified = useMemo(
-    () => statement.movements.map((m) => ({ ...m, ...classifyStatementMovement(m) })),
+    () => statement.movements.map((m) => ({ ...m, ...classifyStatementMovement(m, statement.bank) })),
     [statement],
   );
 
@@ -147,7 +153,7 @@ function Preview({
     <section className="flex flex-col gap-6">
       <p className="rounded-lg border border-accent p-4 text-sm">
         <strong className="text-accent">✓ El extracto cuadra.</strong> {statement.movements.length} movimientos del{" "}
-        {statement.from} al {statement.to}, cuenta de ahorros *{statement.accountLast4}. El resumen, los totales y
+        {statement.from} al {statement.to}, {ACCOUNT_LABELS[statement.bank]} *{statement.accountLast4}. El resumen, los totales y
         los saldos coinciden.
       </p>
 

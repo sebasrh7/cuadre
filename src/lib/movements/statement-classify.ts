@@ -1,5 +1,5 @@
 import { centsToPesos } from "@/lib/parsers/amount";
-import type { StatementMovement } from "@/lib/parsers/bancolombia-statement";
+import type { StatementBank, StatementMovement } from "@/lib/parsers/statement";
 
 export type StatementKind =
   /** `ABONO DE GIRO INTERNACIONAL`: se concilia con los ingresos en USD. */
@@ -8,8 +8,10 @@ export type StatementKind =
   | "interest"
   /** Envío a una billetera (Nequi): casi siempre del mismo titular, el usuario confirma. */
   | "wallet_transfer"
-  /** `TRANSF A <nombre>`: propia si el nombre es del usuario. */
+  /** `TRANSF A <nombre>` (Bancolombia) o `De`/`Para <nombre>` (Nequi): propia si el nombre es del usuario. */
   | "person_transfer"
+  /** Movimiento que por definición es entre cuentas del mismo titular (`Recarga desde Bancolombia`). */
+  | "self_transfer"
   | "expense"
   | "other_income";
 
@@ -30,7 +32,8 @@ const EXPENSE_PREFIXES = [
   "TRANSFERENCIA CTA",
 ];
 
-export function classifyStatementMovement(m: StatementMovement): ClassifiedMovement {
+export function classifyStatementMovement(m: StatementMovement, bank: StatementBank = "bancolombia"): ClassifiedMovement {
+  if (bank === "nequi") return classifyNequiMovement(m);
   const text = m.description.toUpperCase();
 
   if (text.startsWith("ABONO DE GIRO INTERNACIONAL")) {
@@ -50,6 +53,25 @@ export function classifyStatementMovement(m: StatementMovement): ClassifiedMovem
   return { kind: "expense", counterparty: rest || m.description || null };
 }
 
+/** Prefijos de Nequi que anteceden al comercio en un gasto. */
+const NEQUI_EXPENSE_PREFIXES = [/^PAGO EN QR BRE-B:\s*/i, /^COMPRA (PIN )?(PTM )?/i, /^PAGO (EN |PTM )?/i];
+
+function classifyNequiMovement(m: StatementMovement): ClassifiedMovement {
+  const text = m.description.trim();
+
+  if (/^Recarga desde Bancolombia/i.test(text)) return { kind: "self_transfer", counterparty: "Bancolombia" };
+  if (/^Pago de Intereses/i.test(text)) return { kind: "interest", counterparty: null };
+
+  const person = /^(?:De|Para)\s+(.+)$/i.exec(text) ?? /^ENVIO CON BRE-B A:\s*(.+)$/i.exec(text);
+  if (person) return { kind: "person_transfer", counterparty: person[1].trim() };
+
+  if (m.amountCents > 0) return { kind: "other_income", counterparty: text || null };
+
+  const prefix = NEQUI_EXPENSE_PREFIXES.find((p) => p.test(text));
+  const rest = prefix ? text.replace(prefix, "").trim() : text;
+  return { kind: "expense", counterparty: rest || text || null };
+}
+
 export interface MonthlyInterest {
   /** `YYYY-MM` */
   month: string;
@@ -62,10 +84,13 @@ export interface MonthlyInterest {
  * El banco abona intereses casi a diario, por centavos. Se agrupan por mes y
  * se suman en centavos antes de redondear, para no perder plata en el redondeo.
  */
-export function groupMonthlyInterest(movements: StatementMovement[]): MonthlyInterest[] {
+export function groupMonthlyInterest(
+  movements: StatementMovement[],
+  bank: StatementBank = "bancolombia",
+): MonthlyInterest[] {
   const byMonth = new Map<string, { lastDate: string; cents: number }>();
   for (const m of movements) {
-    if (classifyStatementMovement(m).kind !== "interest") continue;
+    if (classifyStatementMovement(m, bank).kind !== "interest") continue;
     const month = m.date.slice(0, 7);
     const entry = byMonth.get(month) ?? { lastDate: m.date, cents: 0 };
     entry.cents += m.amountCents;

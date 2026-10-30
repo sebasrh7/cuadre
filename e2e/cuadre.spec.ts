@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { buildNequiStatement } from "../src/lib/parsers/__fixtures__/nequi-statement";
 import { buildStatementPdf } from "../src/lib/parsers/__fixtures__/statement-pdf";
 import { STORAGE_STATE } from "./global-setup";
 
@@ -120,6 +121,20 @@ test.describe("flujo completo de un usuario", () => {
     await expect(page.getByText("6 ya estaban guardados y se omitieron")).toBeVisible();
   });
 
+  test("importa también un extracto de Nequi y reconoce el banco", async ({ page }) => {
+    await page.goto("/importar");
+    await page.getByLabel("Extracto (PDF)").setInputFiles({
+      name: "nequi.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from(await buildStatementPdf(buildNequiStatement())),
+    });
+    await page.getByRole("button", { name: "Leer extracto" }).click();
+    await expect(page.getByText(/8 movimientos del 2026-09-01 al 2026-09-30, cuenta Nequi \*8877/)).toBeVisible();
+    await page.getByRole("button", { name: "Guardar movimientos" }).click();
+    // 7 movimientos + 1 de intereses agrupados.
+    await expect(page.getByText("8 movimientos nuevos")).toBeVisible();
+  });
+
   test("los movimientos quedan agrupados por mes", async ({ page }) => {
     await page.goto("/movimientos");
     await expect(page.getByRole("heading", { name: "Diciembre de 2026" })).toBeVisible();
@@ -134,7 +149,8 @@ test.describe("flujo completo de un usuario", () => {
     expect(response.status()).toBe(200);
     const csv = await response.text();
     expect(csv).toContain("Fecha;Tipo;Valor (COP)");
-    expect(csv.trim().split("\r\n")).toHaveLength(7);
+    // Encabezado + 6 de Bancolombia + 8 de Nequi.
+    expect(csv.trim().split("\r\n")).toHaveLength(15);
   });
 
   test("borra la cuenta y todos sus datos", async ({ page }) => {

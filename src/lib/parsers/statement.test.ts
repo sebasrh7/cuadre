@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as fx from "./__fixtures__/bancolombia-statement";
-import { parseBancolombiaStatement, type Statement } from "./bancolombia-statement";
+import { parseBancolombiaStatement, type Statement } from "./statement";
 
 function parse(items = fx.buildStatement()): Statement {
   const result = parseBancolombiaStatement(items);

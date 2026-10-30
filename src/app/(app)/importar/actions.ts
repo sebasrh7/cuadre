@@ -10,13 +10,14 @@ import {
   reconcileForeignIncomes,
 } from "@/lib/movements/statement-import";
 import { replaceAlertsWithStatement } from "@/lib/movements/load";
-import { verifyStatement } from "@/lib/parsers/bancolombia-statement";
+import { verifyStatement } from "@/lib/parsers/statement";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const cents = z.number().int().safe();
 
 const importSchema = z.object({
   statement: z.object({
+    bank: z.enum(["bancolombia", "nequi"]),
     from: isoDate,
     to: isoDate,
     accountLast4: z.string().regex(/^\d{4}$/),
@@ -90,7 +91,12 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
   await supabase
     .from("own_accounts")
     .upsert(
-      { user_id: userId, institution: "bancolombia", kind: "savings", last4: statement.accountLast4 },
+      {
+        user_id: userId,
+        institution: statement.bank,
+        kind: statement.bank === "nequi" ? "wallet" : "savings",
+        last4: statement.accountLast4,
+      },
       { onConflict: "user_id,institution,kind,last4", ignoreDuplicates: true },
     );
 

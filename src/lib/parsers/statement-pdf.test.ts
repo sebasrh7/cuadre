@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildStatementPdf } from "./__fixtures__/statement-pdf";
-import { parseBancolombiaStatement, type TextItem } from "./bancolombia-statement";
+import { parseBancolombiaStatement, type TextItem } from "./statement";
 
 /** Lectura con pdf.js en Node (la app usa la versión de navegador; el resultado es el mismo). */
 async function extract(data: Uint8Array): Promise<TextItem[]> {

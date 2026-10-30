@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as fx from "@/lib/parsers/__fixtures__/bancolombia-statement";
-import { parseBancolombiaStatement, type Statement } from "@/lib/parsers/bancolombia-statement";
+import * as nequiFx from "@/lib/parsers/__fixtures__/nequi-statement";
+import { parseBancolombiaStatement, parseStatement, type Statement } from "@/lib/parsers/statement";
 import {
   planStatementImport,
   reconcileForeignIncomes,
@@ -124,5 +125,32 @@ describe("reconcileForeignIncomes", () => {
       [income("sin-monto", "2026-12-03"), income("con-monto", "2026-12-05", 3_850_000)],
     );
     expect(links).toEqual([{ incomeId: "con-monto", movementId: "g1", replacesManualMovementId: "manual-con-monto" }]);
+  });
+});
+
+describe("planStatementImport (Nequi)", () => {
+  const result = parseStatement(nequiFx.buildNequiStatement());
+  if (!result.ok) throw new Error(result.problem);
+  const plan = planStatementImport(result.statement, decisions);
+
+  it("la recarga desde Bancolombia siempre es entre cuentas propias", () => {
+    expect(plan.find((m) => m.counterparty === "Bancolombia")).toMatchObject({ kind: "own_transfer", category: null });
+  });
+
+  it("lo recibido de otra persona es ingreso, sin categoría de transferencia", () => {
+    expect(plan.find((m) => m.counterparty === "ANA PRUEBA")).toMatchObject({ kind: "income", category: null });
+  });
+
+  it("lo enviado a otra persona es gasto en Transferencias, y a sí mismo es propio", () => {
+    expect(plan.find((m) => m.counterparty === "LAURA EJEMPLO")).toMatchObject({ kind: "expense", category: "Transferencias" });
+    expect(plan.find((m) => m.counterparty === "ANDRES PRUEBA EJEMPLO")?.kind).toBe("own_transfer");
+  });
+
+  it("agrupa los intereses y usa claves distintas a las de Bancolombia", () => {
+    expect(plan.find((m) => m.category === "Intereses")).toMatchObject({
+      amountCop: 46,
+      dedupeKey: "statement-interest|nequi|8877|2026-09",
+    });
+    expect(plan.every((m) => m.dedupeKey.includes("nequi|"))).toBe(true);
   });
 });

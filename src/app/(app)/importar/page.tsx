@@ -8,7 +8,7 @@ export default function ImportPage() {
       <div>
         <h1 className="text-2xl font-semibold">Importar extracto</h1>
         <p className="text-sm text-muted">
-          Sube el extracto de tu cuenta de ahorros Bancolombia (PDF). Se lee en tu navegador: el
+          Sube el extracto de tu cuenta de ahorros Bancolombia o de tu Nequi (PDF). Se lee en tu navegador: el
           archivo y su contraseña nunca salen de tu equipo.
         </p>
       </div>
