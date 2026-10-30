@@ -12,7 +12,7 @@ export type NuFixtureMovement = { date: string; description: string; value: stri
 
 export const nuMovements: NuFixtureMovement[] = [
   { date: "02 sep", description: "Recibiste de ANA PRUEBA", value: "+$400.000,00" },
-  { date: "05 sep", description: "Compra en TIENDA EJEMPLO con tarjeta débito", value: "-$50.000,00" },
+  { date: "05 sep", description: "Compra en FERRETERIA EJEMPLO con tarjeta débito", value: "-$50.000,00" },
   { date: "", description: "Impuesto del 4x1000", value: "-$200,00" },
   { date: "10 sep", description: "Recibiste de LAURA EJEMPLO", value: "+$200.000,00" },
   { date: "15 sep", description: "Pagaste tu tarjeta", value: "-$300.000,00" },

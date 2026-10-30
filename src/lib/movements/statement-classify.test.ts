@@ -71,7 +71,7 @@ describe("classifyStatementMovement (Cuenta Nu)", () => {
   it.each([
     ["Recibiste de ANA PRUEBA", 40_000_000, "person_transfer", "ANA PRUEBA"],
     ["Pagaste tu tarjeta", -30_000_000, "self_transfer", "Tarjeta Nu"],
-    ["Compra en TIENDA EJEMPLO con tarjeta débito", -5_000_000, "expense", "TIENDA EJEMPLO"],
+    ["Compra en FERRETERIA EJEMPLO con tarjeta débito", -5_000_000, "expense", "FERRETERIA EJEMPLO"],
     ["Impuesto del 4x1000", -20_000, "expense", "Impuesto 4x1000"],
     ["Rendimiento total de tu cuenta", 123_456, "interest", null],
     ["Cobro por retiro", -1_000_000, "expense", "Cobro por retiro"],
