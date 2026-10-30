@@ -27,7 +27,7 @@ async function Dashboard() {
   const [{ data: movements }, taxRules, { data: pilaRules }] = await Promise.all([
     supabase
       .from("movements")
-      .select("occurred_on, amount_cop, direction, kind, category")
+      .select("occurred_on, amount_cop, direction, kind, category, source")
       .gte("occurred_on", `${year}-01-01`)
       .lte("occurred_on", `${year}-12-31`),
     loadTaxRules(supabase, year),
@@ -54,15 +54,21 @@ async function Dashboard() {
   }
 
   const months = [...new Set(movements.map((m) => m.occurred_on.slice(0, 7)))].sort();
+  // Un mes sin extracto (solo alertas o registros a mano) está incompleto: las alertas no traen
+  // todos los ingresos. No cuenta para promedios ni para decir si toca aportar.
+  const statementMonths = new Set(movements.filter((m) => m.source === "statement").map((m) => m.occurred_on.slice(0, 7)));
   const incomeByMonth = months.map((month) => ({
     month,
     income: movements
       .filter((m) => m.kind === "income" && m.occurred_on.startsWith(month))
       .reduce((t, m) => t + m.amount_cop, 0),
+    complete: statementMonths.has(month),
   }));
   const incomeYtd = incomeByMonth.reduce((t, m) => t + m.income, 0);
   const depositsYtd = movements.filter((m) => m.direction === "in").reduce((t, m) => t + m.amount_cop, 0);
   const lastMonth = incomeByMonth.at(-1)!;
+  const completeMonths = incomeByMonth.filter((m) => m.complete);
+  const lastCompleteMonth = completeMonths.at(-1);
 
   return (
     <div className="flex flex-col gap-8">
@@ -71,7 +77,7 @@ async function Dashboard() {
       {nextPila && (
         <DeadlinesCard
           due={nextPila}
-          periodIncome={incomeByMonth.find((m) => m.month === nextPila.periodMonth)?.income ?? null}
+          periodIncome={completeMonths.find((m) => m.month === nextPila.periodMonth)?.income ?? null}
           estimate={
             taxRules
               ? (income: number) =>
@@ -96,16 +102,21 @@ async function Dashboard() {
               Aún no tenemos los valores oficiales de {year}; usamos los de {taxRules.rules.year}.
             </p>
           )}
-          <SocialSecurityCard
-            monthLabel={monthName(lastMonth.month)}
-            income={lastMonth.income}
-            arlRisk={(profile.arl_risk ?? 1) as 1 | 2 | 3 | 4 | 5}
-            rules={taxRules.rules}
-            months={incomeByMonth.map((m) => ({ label: monthName(m.month), income: m.income }))}
-          />
+          {lastCompleteMonth && (
+            <SocialSecurityCard
+              monthLabel={monthName(lastCompleteMonth.month)}
+              income={lastCompleteMonth.income}
+              arlRisk={(profile.arl_risk ?? 1) as 1 | 2 | 3 | 4 | 5}
+              rules={taxRules.rules}
+              months={completeMonths.map((m) => ({ label: monthName(m.month), income: m.income }))}
+            />
+          )}
           <RentaCard
             year={year}
-            checks={checkRenta({ incomeYtd, depositsYtd, monthsWithData: months.length }, taxRules.rules)}
+            checks={checkRenta(
+              { incomeYtd, depositsYtd, monthsWithData: completeMonths.length || months.length },
+              taxRules.rules,
+            )}
             unmeasured={unmeasuredRentaThresholds(taxRules.rules)}
             uvt={taxRules.rules.uvt}
           />
