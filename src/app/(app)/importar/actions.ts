@@ -9,7 +9,7 @@ import {
   planStatementImport,
   reconcileForeignIncomes,
 } from "@/lib/movements/statement-import";
-import { replaceAlertsWithStatement } from "@/lib/movements/load";
+import { replaceAlertsWithStatement, replaceDeclaredIncome } from "@/lib/movements/load";
 import { verifyStatement } from "@/lib/parsers/statement";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -57,6 +57,8 @@ export type ImportResult =
       inserted: number;
       duplicates: number;
       replacedAlerts: number;
+      /** Ingresos que el usuario había declarado para meses sin extracto. */
+      replacedDeclared: number;
       linkedIncomes: number;
       categorized: number;
       uncategorized: number;
@@ -111,6 +113,7 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
   // dos veces. Con otro banco no: una compra igual en otra cuenta borraría la alerta.
   const replacedAlerts =
     statement.bank === "bancolombia" ? await replaceAlertsWithStatement(supabase, statement.from, statement.to) : 0;
+  const replacedDeclared = await replaceDeclaredIncome(supabase, statement.from, statement.to, planned);
   const linkedIncomes = await linkForeignIncomes(supabase, statement.from, statement.to);
   // Si la categorización falla, los movimientos ya quedaron guardados: se reintenta desde /movimientos.
   const categories = await categorizePendingExpenses(supabase, profile.ai_categorization).catch(() => null);
@@ -120,6 +123,7 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
     inserted: inserted?.length ?? 0,
     duplicates: rows.length - (inserted?.length ?? 0),
     replacedAlerts,
+    replacedDeclared,
     linkedIncomes,
     categorized: categories?.categorized ?? 0,
     uncategorized: categories?.pending ?? 0,
