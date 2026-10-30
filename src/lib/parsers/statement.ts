@@ -17,7 +17,7 @@ export interface StatementMovement {
   balanceCents: number;
 }
 
-export type StatementBank = "bancolombia" | "nequi";
+export type StatementBank = "bancolombia" | "nequi" | "nu";
 
 export interface Statement {
   bank: StatementBank;
@@ -108,14 +108,15 @@ const nequi: StatementFormat = {
 const FORMATS = [nequi, bancolombia];
 
 /**
- * Lee un extracto de cuenta de Bancolombia o de Nequi a partir del texto del
- * PDF con posiciones, reconociendo de qué banco es. Además de leer, verifica el
- * resultado contra el resumen del propio extracto: si algo no cuadra, no
- * devuelve datos.
+ * Lee un extracto de cuenta de Bancolombia, Nequi o la Cuenta Nu a partir del
+ * texto del PDF con posiciones, reconociendo de qué banco es. Además de leer,
+ * verifica el resultado contra el resumen del propio extracto: si algo no
+ * cuadra, no devuelve datos.
  */
 export function parseStatement(items: TextItem[]): ParseStatementResult {
   const rows = groupRows(items);
   const text = rowTexts(rows).join("\n");
+  if (/Lo que entró a tu cuenta/i.test(text)) return parseNuAccount(rows);
   const format = FORMATS.find((f) => f.recognizes(text));
   return format ? parseWith(format, rows) : { ok: false, problem: "not_a_statement" };
 }
@@ -262,6 +263,120 @@ function resolveDate(day: number, month: number, period: Period): string {
   const toYear = Number(period.to.slice(0, 4));
   const year = month < fromMonth ? toYear : fromYear;
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+const MONTHS: Record<string, number> = {
+  ene: 1, feb: 2, mar: 3, abr: 4, may: 5, jun: 6, jul: 7, ago: 8, sep: 9, oct: 10, nov: 11, dic: 12,
+};
+
+/** Monto en formato colombiano de Nu: `+$999.999,99`, `-$999,99`, `$9,99`. */
+function colombianAmount(str: string): number | null {
+  const m = /^([+-])?\s?\$\s?(\d{1,3}(?:\.\d{3})*),(\d{2})$/.exec(str.trim());
+  if (!m) return null;
+  const cents = Number(m[2].replace(/\./g, "")) * 100 + Number(m[3]);
+  return m[1] === "-" ? -cents : cents;
+}
+
+/**
+ * La Cuenta Nu tiene otro formato: el resumen va en frases ("Lo que entró a tu
+ * cuenta"), no hay columna de saldo, las fechas son `30 sep` y el 4x1000 y los
+ * rendimientos salen en renglones sin fecha. Se verifica igual de estricto:
+ * inicio + movimientos = final, y los totales del resumen contra los
+ * movimientos.
+ */
+function parseNuAccount(rows: Row[]): ParseStatementResult {
+  const texts = rowTexts(rows);
+  const periodMatch = texts
+    .map((t) => /(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/.exec(t))
+    .find(Boolean);
+  const month = periodMatch && MONTHS[periodMatch[3].toLowerCase()];
+  const accountLast4 = nuAccountLast4(rows);
+  if (!periodMatch || !month || !accountLast4) return { ok: false, problem: "not_a_statement" };
+
+  const ymd = (day: number) => `${periodMatch[4]}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const period = { from: ymd(Number(periodMatch[1])), to: ymd(Number(periodMatch[2])) };
+
+  const movementsStart = rows.findIndex((r) => r.cells.map((c) => c.str).join(" ") === "Movimientos");
+  if (movementsStart === -1) return { ok: false, problem: "missing_summary" };
+
+  const label = (pattern: RegExp) => {
+    for (const row of rows.slice(0, movementsStart)) {
+      const index = row.cells.findIndex((c) => pattern.test(c.str.trim()));
+      if (index === -1) continue;
+      const amount = row.cells.slice(index + 1).map((c) => colombianAmount(c.str)).find((v) => v !== null);
+      if (amount !== undefined && amount !== null) return amount;
+    }
+    return null;
+  };
+  const start = label(/^Tu dinero al inicio del mes$/i);
+  const end = label(/^Tu dinero a final del mes$/i);
+  const inflow = label(/^Lo que entró a tu cuenta$/i);
+  const outflow = label(/^Lo que salió de tu cuenta$/i);
+  if (start === null || end === null || inflow === null || outflow === null) {
+    return { ok: false, problem: "missing_summary" };
+  }
+  const tax = label(/^Impuesto del 4x1000$/i) ?? 0;
+  const withdrawalFee = label(/por retiro$/i) ?? 0;
+  const yieldCents = label(/^Rendimiento total de tu cuenta$/i) ?? 0;
+
+  const movements: StatementMovement[] = [];
+  let lastDate: string | null = null;
+  for (const row of rows.slice(movementsStart + 1)) {
+    const amountCell = row.cells.find((c) => colombianAmount(c.str) !== null);
+    if (!amountCell) continue;
+    const dateCell = row.cells.find((c) => /^\d{1,2} [a-z]{3}$/i.test(c.str));
+    const description = row.cells
+      .filter((c) => c !== amountCell && c !== dateCell)
+      .map((c) => c.str)
+      .join(" ")
+      .trim();
+
+    let date: string | null;
+    if (dateCell) {
+      const [day, monthName] = dateCell.str.split(" ");
+      const m = MONTHS[monthName.toLowerCase()];
+      date = m ? `${periodMatch[4]}-${String(m).padStart(2, "0")}-${day.padStart(2, "0")}` : null;
+    } else if (/^Rendimiento/i.test(description)) {
+      date = period.to;
+    } else {
+      // El 4x1000 sale debajo del movimiento que lo causó, sin fecha.
+      date = lastDate;
+    }
+    if (!date) continue;
+    lastDate = date;
+    movements.push({ date, description, amountCents: colombianAmount(amountCell.str)!, balanceCents: 0 });
+  }
+
+  // Sin columna de saldo: se reconstruye para conservar el formato común.
+  let balance = start;
+  for (const m of movements) m.balanceCents = balance += m.amountCents;
+
+  const statement: Statement = {
+    bank: "nu",
+    ...period,
+    accountLast4,
+    previousBalanceCents: start,
+    currentBalanceCents: end,
+    totalCreditsCents: inflow + yieldCents,
+    totalDebitsCents: Math.abs(outflow) + Math.abs(tax) + Math.abs(withdrawalFee),
+    movements,
+  };
+  const problem = verifyStatement(statement);
+  return problem ? { ok: false, problem } : { ok: true, statement };
+}
+
+/** El número de cuenta va justo debajo de la etiqueta "Número de Cuenta". */
+function nuAccountLast4(rows: Row[]): string | null {
+  for (const row of rows) {
+    const labelCell = row.cells.find((c) => /^Número de Cuenta$/i.test(c.str));
+    if (!labelCell) continue;
+    for (const below of rows) {
+      if (below.page !== row.page || below.y >= row.y || row.y - below.y > 30) continue;
+      const value = below.cells.find((c) => Math.abs(c.x - labelCell.x) < 20 && /^\d{6,14}$/.test(c.str));
+      if (value) return value.str.slice(-4);
+    }
+  }
+  return null;
 }
 
 /**

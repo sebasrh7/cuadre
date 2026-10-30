@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/sebasrh7/cuadre/actions/workflows/ci.yml/badge.svg)](https://github.com/sebasrh7/cuadre/actions/workflows/ci.yml)
 
-**Las finanzas de un independiente en Colombia, cuadradas.** Importas el extracto de Bancolombia y Cuadre te dice cuánto recibes al mes, en qué gastas, cuánto te toca aportar a seguridad social, cuándo vence tu PILA y si vas a tener que declarar renta.
+**Las finanzas de un independiente en Colombia, cuadradas.** Importas los extractos de Bancolombia, Nequi o la Cuenta Nu y Cuadre te dice cuánto recibes al mes, en qué gastas, cuánto te toca aportar a seguridad social, cuándo vence tu PILA y si vas a tener que declarar renta.
 
 **Demo:** [cuadre-kohl-eight.vercel.app](https://cuadre-kohl-eight.vercel.app) (entrar con Google)
 
@@ -19,9 +19,9 @@
 
 | | |
 |---|---|
-| **Importa el extracto** | Lee el PDF de Bancolombia **en el navegador** con pdf.js: el archivo y su contraseña nunca salen del equipo. Verifica que el extracto cuadre (resumen, totales y saldo de cada movimiento) antes de guardar nada. Reimportar no duplica. |
+| **Importa el extracto** | Lee el PDF de Bancolombia, Nequi o la Cuenta Nu **en el navegador** con pdf.js: el archivo y su contraseña nunca salen del equipo. Verifica que el extracto cuadre (resumen, totales y saldo de cada movimiento) antes de guardar nada. Reimportar no duplica. |
 | **Alertas del mes en curso** | El extracto es trimestral: las alertas de Bancolombia se pegan o se comparten desde el celular (Compartir → Cuadre en Android). Se leen en el navegador y, al llegar el extracto, sus movimientos las reemplazan sin duplicar. |
-| **Separa lo que es tuyo** | Detecta transferencias entre tus propias cuentas (Nequi, tu nombre aunque el banco lo corte a 12 letras) para que no cuenten como ingreso ni gasto. |
+| **Separa lo que es tuyo** | Detecta transferencias entre tus propias cuentas (Nequi, pago de la tarjeta Nu, tu nombre aunque el banco lo corte a 12 letras) para que no cuenten como ingreso ni gasto. |
 | **Categoriza gastos** | Reglas para comercios conocidos + **Gemini** (opcional) para el resto, con salida JSON validada con Zod, caché por comercio, cupo diario y correcciones del usuario que siempre ganan. Sin IA también funciona. |
 | **Seguridad social** | IBC (40 % del ingreso, piso 1 SMMLV, techo 25), salud, pensión y ARL mes a mes, con la fórmula visible. |
 | **¿Me toca declarar renta?** | Ingresos y consignaciones contra el tope en UVT, con proyección a fin de año. |
@@ -46,7 +46,7 @@ Next.js 16 (App Router, Server Actions, Cache Components) · React 19 · TypeScr
 ```
 src/
   app/                      Rutas (inicio, importar, alertas, movimientos, cuenta, privacidad, calendario .ics)
-  lib/parsers/              Lectores puros del extracto y de las alertas de Bancolombia
+  lib/parsers/              Lectores puros de los extractos (Bancolombia, Nequi, Cuenta Nu) y de las alertas de Bancolombia
   lib/movements/            Clasificación, transferencias propias, plan de importación, conciliación
   lib/categories/           Reglas, orquestación con caché/cupo y proveedor de Gemini
   lib/tax/                  Seguridad social y renta a partir de tax_rules

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as fx from "@/lib/parsers/__fixtures__/bancolombia-statement";
 import * as nequiFx from "@/lib/parsers/__fixtures__/nequi-statement";
+import * as nuFx from "@/lib/parsers/__fixtures__/nu-account-statement";
 import { parseBancolombiaStatement, parseStatement, type Statement } from "@/lib/parsers/statement";
 import {
   planStatementImport,
@@ -152,5 +153,28 @@ describe("planStatementImport (Nequi)", () => {
       dedupeKey: "statement-interest|nequi|8877|2026-09",
     });
     expect(plan.every((m) => m.dedupeKey.includes("nequi|"))).toBe(true);
+  });
+});
+
+describe("planStatementImport (Cuenta Nu)", () => {
+  const result = parseStatement(nuFx.buildNuAccountStatement());
+  if (!result.ok) throw new Error(result.problem);
+  const plan = planStatementImport(result.statement, decisions);
+
+  it("el pago de la tarjeta Nu es entre cuentas propias", () => {
+    expect(plan.find((m) => m.counterparty === "Tarjeta Nu")).toMatchObject({ kind: "own_transfer", category: null });
+  });
+
+  it("guarda cada 4x1000 como gasto, aunque se repita el mismo día", () => {
+    expect(plan.filter((m) => m.counterparty === "Impuesto 4x1000")).toHaveLength(2);
+  });
+
+  it("los rendimientos son intereses con claves propias de Nu", () => {
+    expect(plan.find((m) => m.category === "Intereses")).toMatchObject({
+      amountCop: 1235,
+      dedupeKey: "statement-interest|nu|5678|2026-09",
+    });
+    expect(plan.every((m) => m.dedupeKey.includes("nu|"))).toBe(true);
+    expect(plan).toHaveLength(7);
   });
 });
