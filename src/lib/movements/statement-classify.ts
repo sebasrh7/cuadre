@@ -35,6 +35,7 @@ const EXPENSE_PREFIXES = [
 export function classifyStatementMovement(m: StatementMovement, bank: StatementBank = "bancolombia"): ClassifiedMovement {
   if (bank === "nequi") return classifyNequiMovement(m);
   if (bank === "nu") return classifyNuMovement(m);
+  if (bank === "nu_card") return classifyNuCardMovement(m);
   const text = m.description.toUpperCase();
 
   if (text.startsWith("ABONO DE GIRO INTERNACIONAL")) {
@@ -88,6 +89,19 @@ function classifyNuMovement(m: StatementMovement): ClassifiedMovement {
 
   const purchase = /^Compra en\s+(.+?)(?:\s+con tarjeta d[eé]bito)?$/i.exec(text);
   return { kind: "expense", counterparty: purchase?.[1].trim() || text || null };
+}
+
+function classifyNuCardMovement(m: StatementMovement): ClassifiedMovement {
+  const text = m.description.trim();
+
+  // El pago de la tarjeta sale de otra cuenta del mismo titular.
+  if (/^Pago$/i.test(text)) return { kind: "self_transfer", counterparty: "Pago tarjeta Nu" };
+  if (m.amountCents > 0) return { kind: "other_income", counterparty: text || null };
+
+  // `Spotify Pago*Spotify Bogota`: primero el nombre del comercio, luego el descriptor del pago.
+  const descriptor = /^(.*?)\s*\S+\*(.+)$/.exec(text);
+  const merchant = descriptor ? descriptor[1] || descriptor[2] : text;
+  return { kind: "expense", counterparty: merchant.trim() || text || null };
 }
 
 export interface MonthlyInterest {

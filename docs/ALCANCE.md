@@ -38,7 +38,7 @@
 | 2 | **Alertas de Bancolombia** | Pegar el texto o compartirlo desde el celular (Web Share Target). Se leen en el navegador; al importar el extracto, sus movimientos reemplazan a las alertas | v1 ✅ |
 | 3 | **Facturas electrónicas DIAN (ZIP/XML)** | Arrastrar el archivo. Aporta NIT, razón social y soporte del gasto | v2 |
 | 4 | **Ingresos en USD (opcional)** | Solo para quien conoce el monto en USD: se concilia con el `ABONO DE GIRO INTERNACIONAL` y da la tasa efectiva. El usuario de referencia cobra un monto fijo en pesos y no conoce los dólares, así que los ingresos salen del extracto en COP | v1 |
-| 5 | Nequi ✅, Cuenta Nu ✅, tarjeta de crédito Nu | Extractos en PDF, leídos en el navegador y verificados contra su resumen como los de Bancolombia. El pago de la tarjeta Nu desde la Cuenta Nu es transferencia propia. Tarjeta de crédito: por hacer | v2 |
+| 5 | Nequi ✅, Cuenta Nu ✅, tarjeta de crédito Nu ✅ | Extractos en PDF, leídos en el navegador y verificados contra su resumen como los de Bancolombia. Tarjeta: cada compra cuenta una vez por su valor total en la fecha de compra (no por cuotas); intereses y cargos son gastos; el pago, de cualquier lado, es transferencia propia. Extractos de la tarjeta con devoluciones: todavía no | v2 |
 | 6 | Importación automática desde Gmail | OAuth con Gmail (`gmail.readonly` es *scope* restringido: verificación de Google en producción; en modo testing alcanza para ≤100 usuarios) | v2 |
 
 ### Conciliación

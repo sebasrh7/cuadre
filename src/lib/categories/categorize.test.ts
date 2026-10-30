@@ -24,6 +24,7 @@ describe("categoryByKeyword", () => {
     ["APORTES EN LINEA", "Impuestos y seguridad social"],
     ["RETIRO EN CAJERO", "Efectivo"],
     ["SUC VIRTUAL", "Transferencias"],
+    ["INTERESES TARJETA NU", "Otros"],
   ])("%s → %s", (key, category) => {
     expect(categoryByKeyword(key)).toBe(category);
   });

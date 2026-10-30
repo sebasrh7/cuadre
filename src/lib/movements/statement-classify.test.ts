@@ -79,3 +79,14 @@ describe("classifyStatementMovement (Cuenta Nu)", () => {
     expect(classifyStatementMovement(movement(description, amount), "nu")).toEqual({ kind, counterparty });
   });
 });
+
+describe("classifyStatementMovement (tarjeta de crédito Nu)", () => {
+  it.each([
+    ["Pago", 65_000_000, "self_transfer", "Pago tarjeta Nu"],
+    ["Spotify Pago*Spotify Bogota", -2_690_000, "expense", "Spotify"],
+    ["Pago*Tienda Celulares", -90_000_000, "expense", "Tienda Celulares"],
+    ["Intereses tarjeta Nu", -597_000, "expense", "Intereses tarjeta Nu"],
+  ])("%s → %s", (description, amount, kind, counterparty) => {
+    expect(classifyStatementMovement(movement(description, amount), "nu_card")).toEqual({ kind, counterparty });
+  });
+});

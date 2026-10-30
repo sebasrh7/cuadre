@@ -17,7 +17,7 @@ const cents = z.number().int().safe();
 
 const importSchema = z.object({
   statement: z.object({
-    bank: z.enum(["bancolombia", "nequi", "nu"]),
+    bank: z.enum(["bancolombia", "nequi", "nu", "nu_card"]),
     from: isoDate,
     to: isoDate,
     accountLast4: z.string().regex(/^\d{4}$/),
@@ -43,6 +43,13 @@ const importSchema = z.object({
 });
 
 export type ImportInput = z.input<typeof importSchema>;
+
+const ACCOUNT_KINDS = {
+  bancolombia: "savings",
+  nequi: "wallet",
+  nu: "savings",
+  nu_card: "credit_card",
+} as const satisfies Record<ImportInput["statement"]["bank"], string>;
 
 export type ImportResult =
   | {
@@ -93,15 +100,17 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
     .upsert(
       {
         user_id: userId,
-        institution: statement.bank,
-        kind: statement.bank === "nequi" ? "wallet" : "savings",
+        institution: statement.bank === "nu_card" ? "nu" : statement.bank,
+        kind: ACCOUNT_KINDS[statement.bank],
         last4: statement.accountLast4,
       },
       { onConflict: "user_id,institution,kind,last4", ignoreDuplicates: true },
     );
 
-  // Las alertas del periodo ya están en el extracto: se reemplazan para no contarlas dos veces.
-  const replacedAlerts = await replaceAlertsWithStatement(supabase, statement.from, statement.to);
+  // Las alertas (de Bancolombia) del periodo ya están en el extracto: se reemplazan para no contarlas
+  // dos veces. Con otro banco no: una compra igual en otra cuenta borraría la alerta.
+  const replacedAlerts =
+    statement.bank === "bancolombia" ? await replaceAlertsWithStatement(supabase, statement.from, statement.to) : 0;
   const linkedIncomes = await linkForeignIncomes(supabase, statement.from, statement.to);
   // Si la categorización falla, los movimientos ya quedaron guardados: se reintenta desde /movimientos.
   const categories = await categorizePendingExpenses(supabase, profile.ai_categorization).catch(() => null);

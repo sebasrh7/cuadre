@@ -17,7 +17,7 @@ export interface StatementMovement {
   balanceCents: number;
 }
 
-export type StatementBank = "bancolombia" | "nequi" | "nu";
+export type StatementBank = "bancolombia" | "nequi" | "nu" | "nu_card";
 
 export interface Statement {
   bank: StatementBank;
@@ -37,7 +37,9 @@ export type StatementProblem =
   | "missing_summary"
   | "summary_mismatch"
   | "totals_mismatch"
-  | "balance_mismatch";
+  | "balance_mismatch"
+  /** Tarjeta Nu con devoluciones: todavía no se sabe cómo aparecen en la tabla. */
+  | "unsupported_refunds";
 
 export type ParseStatementResult =
   | { ok: true; statement: Statement }
@@ -117,6 +119,7 @@ export function parseStatement(items: TextItem[]): ParseStatementResult {
   const rows = groupRows(items);
   const text = rowTexts(rows).join("\n");
   if (/Lo que entró a tu cuenta/i.test(text)) return parseNuAccount(rows);
+  if (/Periodo facturado/i.test(text) && /PAGO MÍNIMO/.test(text)) return parseNuCard(rows);
   const format = FORMATS.find((f) => f.recognizes(text));
   return format ? parseWith(format, rows) : { ok: false, problem: "not_a_statement" };
 }
@@ -377,6 +380,227 @@ function nuAccountLast4(rows: Row[]): string | null {
     }
   }
   return null;
+}
+
+/** Celda justo debajo de `label` (misma columna), como en los encabezados de Nu. */
+function valueBelow(rows: Row[], label: RegExp, value: RegExp): RegExpExecArray | null {
+  for (const row of rows) {
+    const labelCell = row.cells.find((c) => label.test(c.str));
+    if (!labelCell) continue;
+    for (const below of rows) {
+      if (below.page !== row.page || below.y >= row.y || row.y - below.y > 30) continue;
+      const cell = below.cells.find((c) => Math.abs(c.x - labelCell.x) < 20 && value.test(c.str));
+      if (cell) return value.exec(cell.str);
+    }
+  }
+  return null;
+}
+
+const NU_DATE = /^(\d{1,2}) ([A-Z]{3}) (\d{4})/;
+const isoFromNu = (day: string, month: number, year: string) =>
+  `${year}-${String(month).padStart(2, "0")}-${day.padStart(2, "0")}`;
+
+/** Columnas de la tabla de la tarjeta Nu, en el orden en que aparecen. */
+const CARD_COLUMNS = ["date", "description", "value", "installments", "monthValue", "interest", "total", "pending"] as const;
+type CardColumn = (typeof CARD_COLUMNS)[number];
+
+/**
+ * El extracto de la tarjeta de crédito Nu no tiene saldos encadenados: se
+ * verifica con sus propias identidades (deuda del mes + intereses + cargos −
+ * abonos = pago mínimo; pago mínimo + deuda pendiente = deuda total; cada pago
+ * se desglosa en capital, intereses y cargos). Las compras se registran por su
+ * valor total en la fecha de compra, no por cuotas: la misma compra a 3 cuotas
+ * aparece en tres extractos y debe contarse una sola vez.
+ */
+function parseNuCard(rows: Row[]): ParseStatementResult {
+  const page1 = rows.filter((r) => r.page === 1);
+  const cut = valueBelow(page1, /^Fecha de corte$/i, NU_DATE);
+  const start = valueBelow(page1, /^Periodo facturado$/i, NU_DATE);
+  const cutMonth = cut && MONTHS[cut[2].toLowerCase()];
+  const startMonth = start && MONTHS[start[2].toLowerCase()];
+  // Hay dos tarjetas (virtual y física); se toma la primera, como en el PDF.
+  const accountLast4 = page1
+    .flatMap((r) => r.cells.map((c) => ({ y: r.y, x: c.x, m: /^[•\s]+(\d{4})$/.exec(c.str) })))
+    .filter((c) => c.m)
+    .sort((a, b) => b.y - a.y || a.x - b.x)[0]?.m?.[1];
+  if (!cut || !cutMonth || !start || !startMonth || !accountLast4) return { ok: false, problem: "not_a_statement" };
+  const period = { from: isoFromNu(start[1], startMonth, start[3]), to: isoFromNu(cut[1], cutMonth, cut[3]) };
+
+  // Valor de una etiqueta del resumen; las que se repiten (comisiones, cargos) se suman.
+  const summary = (label: RegExp) => {
+    let total: number | null = null;
+    for (const row of page1) {
+      const index = row.cells.findIndex((c) => label.test(c.str));
+      if (index === -1) continue;
+      const amount = row.cells.slice(index + 1).map((c) => colombianAmount(c.str)).find((v) => v !== null);
+      if (amount !== undefined && amount !== null) total = (total ?? 0) + amount;
+    }
+    return total;
+  };
+  const due = summary(/^Deuda a pagar este mes$/);
+  const minimum = summary(/^PAGO MÍNIMO$/);
+  const pending = summary(/^Deuda (?!a pagar)\p{Ll}/u);
+  const totalDebt = summary(/^DEUDA TOTAL/);
+  if (due === null || minimum === null || pending === null || totalDebt === null) {
+    return { ok: false, problem: "missing_summary" };
+  }
+  const interest = summary(/^Intereses$/) ?? 0;
+  const fees = summary(/^Comisiones/) ?? 0;
+  const charges = summary(/^Cargos/) ?? 0;
+  const payments = summary(/^Abonos$/) ?? 0;
+  const refunds = summary(/ajustes/i) ?? 0;
+
+  if (due + interest + fees + charges + payments + refunds !== minimum || minimum + pending !== totalDebt) {
+    return { ok: false, problem: "summary_mismatch" };
+  }
+  if (refunds !== 0) return { ok: false, problem: "unsupported_refunds" };
+
+  const table = readCardTable(rows, period);
+  if (!table) return { ok: false, problem: "missing_summary" };
+  const purchases = table.filter((r) => r.description !== "Pago");
+  const paid = table.filter((r) => r.description === "Pago");
+  const purchasesTotal = purchases.reduce((t, r) => t + r.total, 0);
+  const consistent =
+    (purchasesTotal === due || purchasesTotal === due + interest) &&
+    purchases.every((r) => r.monthValue + r.interest === r.total) &&
+    paid.reduce((t, r) => t + r.total, 0) === payments &&
+    paid.every((r) => r.breakdown.reduce((t, v) => t + v, 0) === r.value);
+  if (!consistent) return { ok: false, problem: "totals_mismatch" };
+
+  const extraCharges: [string, number][] = [
+    ["Intereses tarjeta Nu", interest],
+    ["Comisiones tarjeta Nu", fees],
+    ["Cargos tarjeta Nu", charges],
+  ];
+  const movements: StatementMovement[] = [
+    ...table.map((r) => ({
+      date: r.date,
+      description: r.description,
+      amountCents: r.description === "Pago" ? r.value : -r.value,
+      balanceCents: 0,
+    })),
+    ...extraCharges
+      .filter(([, cents]) => cents > 0)
+      .map(([description, cents]) => ({ date: period.to, description, amountCents: -cents, balanceCents: 0 })),
+  ].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Sin saldos en el PDF: el resumen común se arma con los propios movimientos
+  // (ya verificados arriba) para que el servidor pueda volver a revisarlo.
+  const credits = movements.filter((m) => m.amountCents > 0).reduce((t, m) => t + m.amountCents, 0);
+  const debits = movements.filter((m) => m.amountCents < 0).reduce((t, m) => t - m.amountCents, 0);
+  let balance = 0;
+  for (const m of movements) m.balanceCents = balance += m.amountCents;
+
+  const statement: Statement = {
+    bank: "nu_card",
+    ...period,
+    accountLast4,
+    previousBalanceCents: 0,
+    currentBalanceCents: credits - debits,
+    totalCreditsCents: credits,
+    totalDebitsCents: debits,
+    movements,
+  };
+  const problem = verifyStatement(statement);
+  return problem ? { ok: false, problem } : { ok: true, statement };
+}
+
+interface CardRow {
+  date: string;
+  description: string;
+  value: number;
+  monthValue: number;
+  interest: number;
+  total: number;
+  /** Desglose de un pago: a capital, a intereses, a cargos. */
+  breakdown: number[];
+}
+
+interface OpenCardRow extends Omit<CardRow, "date" | "description"> {
+  page: number;
+  y: number;
+  day: string;
+  month: number;
+  year: string | null;
+  lines: string[];
+}
+
+/**
+ * Lee la tabla de movimientos de la tarjeta. Cada movimiento empieza en un
+ * renglón con fecha (`15 SEP`); en los renglones de abajo vienen el año, el
+ * resto de la descripción y, en los pagos, el desglose (`↪ A capital $…`).
+ */
+function readCardTable(rows: Row[], period: { from: string; to: string }): CardRow[] | null {
+  const sorted = [...rows].sort((a, b) => a.page - b.page || b.y - a.y);
+  const result: CardRow[] = [];
+  let header: { x: number; column: CardColumn }[] | null = null;
+  let open: OpenCardRow | null = null;
+
+  const close = () => {
+    if (!open) return;
+    // Sin año impreso: el mes decide de qué año del periodo es.
+    const year =
+      open.year ?? (open.month >= Number(period.from.slice(5, 7)) ? period.from.slice(0, 4) : period.to.slice(0, 4));
+    result.push({
+      date: isoFromNu(open.day, open.month, year),
+      description: open.lines.join(" ").trim(),
+      value: open.value,
+      monthValue: open.monthValue,
+      interest: open.interest,
+      total: open.total,
+      breakdown: open.breakdown,
+    });
+    open = null;
+  };
+
+  for (const row of sorted) {
+    const texts = row.cells.map((c) => c.str);
+    if (texts.includes("Descripción") && texts.includes("Cuotas")) {
+      close();
+      header = row.cells.slice(0, CARD_COLUMNS.length).map((c, i) => ({ x: c.x, column: CARD_COLUMNS[i] }));
+      continue;
+    }
+    if (!header) continue;
+    const columns = header;
+    const columnOf = (x: number) => [...columns].reverse().find((h) => h.x <= x + 5)?.column ?? "date";
+    const cellsIn = (column: CardColumn) => row.cells.filter((c) => columnOf(c.x) === column);
+    const moneyIn = (column: CardColumn) => cellsIn(column).map((c) => colombianAmount(c.str)).find((v) => v !== null) ?? 0;
+
+    const dateCell = cellsIn("date").find((c) => /^\d{1,2} [A-Z]{3}$/.test(c.str));
+    const month = dateCell ? MONTHS[dateCell.str.split(" ")[1].toLowerCase()] : undefined;
+    if (dateCell && month) {
+      close();
+      open = {
+        page: row.page,
+        y: row.y,
+        day: dateCell.str.split(" ")[0],
+        month,
+        year: null,
+        lines: cellsIn("description").map((c) => c.str),
+        value: moneyIn("value"),
+        monthValue: moneyIn("monthValue"),
+        interest: moneyIn("interest"),
+        total: moneyIn("total"),
+        breakdown: [],
+      };
+      continue;
+    }
+    // Lo que no está pegado a un movimiento (pago mínimo, textos legales) no es parte de él.
+    if (!open || open.page !== row.page || open.y - row.y > 30) {
+      close();
+      continue;
+    }
+    const year = cellsIn("date").find((c) => /^\d{4}$/.test(c.str));
+    if (year) open.year = year.str;
+    open.lines.push(...cellsIn("description").map((c) => c.str));
+    // El desglose viene con flecha (`↪ A capital $…`); se acepta también sin ella.
+    for (const cell of row.cells.filter((c) => /^(↪\s*)?A (capital|intereses|cargos)/i.test(c.str))) {
+      const amount = colombianAmount(cell.str.slice(cell.str.indexOf("$")));
+      if (amount !== null) open.breakdown.push(amount);
+    }
+  }
+  close();
+  return header ? result : null;
 }
 
 /**

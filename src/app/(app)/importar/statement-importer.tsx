@@ -12,17 +12,19 @@ import { extractTextItems } from "@/lib/pdf/extract-text-items";
 import { importStatement, type ImportResult } from "./actions";
 
 const PROBLEMS: Record<StatementProblem, string> = {
-  not_a_statement: "Este PDF no parece un extracto de cuenta de Bancolombia, Nequi ni de la Cuenta Nu.",
+  not_a_statement: "Este PDF no parece un extracto de Bancolombia, Nequi, la Cuenta Nu ni la tarjeta Nu.",
   missing_summary: "No encontramos el resumen del extracto (saldo anterior, abonos, cargos).",
   summary_mismatch: "El resumen del extracto no cuadra. No guardamos nada para no meter datos malos.",
   totals_mismatch: "Los movimientos leídos no suman lo que dice el resumen. No guardamos nada.",
   balance_mismatch: "Los saldos de los movimientos no encadenan. No guardamos nada.",
+  unsupported_refunds: "Este extracto de la tarjeta Nu tiene devoluciones y todavía no sabemos leerlas. No guardamos nada.",
 };
 
 const ACCOUNT_LABELS: Record<StatementBank, string> = {
   bancolombia: "cuenta de ahorros Bancolombia",
   nequi: "cuenta Nequi",
   nu: "Cuenta Nu",
+  nu_card: "tarjeta de crédito Nu",
 };
 
 const KIND_LABELS: Record<StatementKind, string> = {
