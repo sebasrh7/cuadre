@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { requireUser } from "@/lib/auth";
 import { matchAlertsToStatement } from "./alert-import";
+import { DECLARED_INCOME_CATEGORY, declaredToReplace, lastDayOfMonth } from "./declared-income";
 import type { OwnIdentity } from "./own-transfer";
 
 type Supabase = Awaited<ReturnType<typeof requireUser>>["supabase"];
@@ -22,6 +23,30 @@ export async function loadOwnIdentity(supabase: Supabase): Promise<OwnIdentity> 
 /** Solo se guarda el hash: la clave incluye nombres y descripciones. */
 export function dedupeHash(key: string): string {
   return createHash("sha256").update(key).digest("hex");
+}
+
+/** Lo que el usuario declaró para los meses del extracto se borra si el extracto trae ingresos ese mes. */
+export async function replaceDeclaredIncome(
+  supabase: Supabase,
+  from: string,
+  to: string,
+  imported: { occurredOn: string; kind: string }[],
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("movements")
+    .select("id, occurred_on")
+    .eq("source", "manual")
+    .eq("category", DECLARED_INCOME_CATEGORY)
+    .gte("occurred_on", `${from.slice(0, 7)}-01`)
+    .lte("occurred_on", lastDayOfMonth(to.slice(0, 7)));
+  if (error || !data.length) return 0;
+
+  const ids = declaredToReplace(
+    data.map((d) => ({ id: d.id, occurredOn: d.occurred_on })),
+    imported,
+  );
+  if (ids.length) await supabase.from("movements").delete().in("id", ids);
+  return ids.length;
 }
 
 /**

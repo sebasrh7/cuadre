@@ -16,8 +16,8 @@ export function IncomeSection({
   year: number;
   /** Lo recibido de personas que el usuario no ha marcado como ingreso. */
   unclassified?: number;
-  /** `complete: false`: mes sin extracto (solo alertas); no entra en el promedio. */
-  incomeByMonth: { month: string; income: number; complete?: boolean }[];
+  /** `complete: false`: mes sin extracto (solo alertas); no entra en el promedio. `declared`: lo dijo el usuario. */
+  incomeByMonth: { month: string; income: number; complete?: boolean; declared?: boolean }[];
 }) {
   const incomeYtd = incomeByMonth.reduce((t, m) => t + m.income, 0);
   const complete = incomeByMonth.filter((m) => m.complete !== false);
@@ -35,7 +35,7 @@ export function IncomeSection({
         <Stat label="Promedio mensual" value={formatCop(average)} />
       </div>
       <ul className="flex flex-col gap-1 text-sm">
-        {incomeByMonth.map(({ month, income, complete }) => (
+        {incomeByMonth.map(({ month, income, complete, declared }) => (
           <li key={month} className="grid grid-cols-[6rem_1fr_7rem] items-center gap-3">
             <span className="text-muted">{monthName(month)}</span>
             <span
@@ -43,7 +43,13 @@ export function IncomeSection({
               style={{ width: `${(income / maxIncome) * 100}%` }}
             />
             <span className="text-right tabular-nums">
-              {complete === false ? <span className="text-muted">sin extracto</span> : formatCop(income)}
+              {complete === false ? (
+                <span className="text-muted">sin extracto</span>
+              ) : declared ? (
+                <span title="Lo registraste tú; el extracto lo reemplaza">{formatCop(income)}*</span>
+              ) : (
+                formatCop(income)
+              )}
             </span>
           </li>
         ))}
@@ -62,6 +68,7 @@ export function IncomeSection({
         Ingresos = lo que entra a tus cuentas sin contar transferencias entre ellas.{" "}
         {partial.length > 0 &&
           `${partial.map((m) => monthName(m.month)).join(", ")}: todavía sin extracto (solo alertas), no cuenta en el promedio. `}
+        {incomeByMonth.some((m) => m.declared) && "* Lo registraste tú hasta que llegue el extracto. "}
         <Link href="/importar" className="underline">
           Importar otro extracto
         </Link>
@@ -73,12 +80,18 @@ export function IncomeSection({
 export function DeadlinesCard({
   due,
   periodIncome,
+  periodDeclared = false,
+  declareForm,
   estimate,
   calendar,
   today,
 }: {
   due: { periodMonth: string; dueDate: string };
   periodIncome: number | null;
+  /** El ingreso del mes lo registró el usuario (no hay extracto todavía). */
+  periodDeclared?: boolean;
+  /** Formulario para registrar el ingreso de un mes sin extracto. */
+  declareForm?: React.ReactNode;
   estimate: ((income: number) => ReturnType<typeof estimateSocialSecurity>) | null;
   calendar: ReturnType<typeof calendarUrls>;
   today: string;
@@ -97,13 +110,23 @@ export function DeadlinesCard({
         <strong>PILA de {period}</strong>: vence el {dueLabel}{" "}
         <span className="text-muted">({days === 0 ? "hoy" : days === 1 ? "mañana" : `en ${days} días`})</span>.
       </p>
-      <p className="text-sm text-muted">
-        {ss === null
-          ? `Importa el extracto con tus movimientos de ${period} para ver si te toca pagar y cuánto.`
-          : ss.obligated
-            ? `Según tus ingresos de ${period} (${formatCop(periodIncome!)}), el aporte estimado es ${formatCop(ss.total)}.`
-            : `En ${period} recibiste ${formatCop(periodIncome!)}, menos de 1 salario mínimo: no estás obligado a pagar ese mes.`}
-      </p>
+      {ss === null && declareForm ? (
+        declareForm
+      ) : (
+        <p className="text-sm text-muted">
+          {ss === null
+            ? `Importa el extracto con tus movimientos de ${period} para ver si te toca pagar y cuánto.`
+            : ss.obligated
+              ? `Según ${periodDeclared ? "lo que registraste" : "tus ingresos"} de ${period} (${formatCop(periodIncome!)}), el aporte estimado es ${formatCop(ss.total)}.`
+              : `En ${period} ${periodDeclared ? "registraste" : "recibiste"} ${formatCop(periodIncome!)}, menos de 1 salario mínimo: no estás obligado a pagar ese mes.`}
+        </p>
+      )}
+      {ss !== null && periodDeclared && declareForm && (
+        <details className="text-sm">
+          <summary className="cursor-pointer text-muted">Cambiar lo que registraste</summary>
+          <div className="mt-2">{declareForm}</div>
+        </details>
+      )}
       <div className="flex flex-wrap gap-3 text-sm">
         <a href={calendar.google} target="_blank" rel="noreferrer" className="text-accent underline">
           Recibir los avisos en Google Calendar

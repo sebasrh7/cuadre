@@ -234,6 +234,11 @@ function Done({ result, onAgain }: { result: Extract<ImportResult, { ok: true }>
         {result.duplicates > 0 && (
           <li>{plural(result.duplicates, "ya estaba guardado y se omitió", "ya estaban guardados y se omitieron")}</li>
         )}
+        {result.replacedDeclared > 0 && (
+          <li>
+            {plural(result.replacedDeclared, "ingreso que habías registrado quedó reemplazado", "ingresos que habías registrado quedaron reemplazados")} por el extracto
+          </li>
+        )}
         {result.replacedAlerts > 0 && (
           <li>{plural(result.replacedAlerts, "alerta reemplazada por el extracto", "alertas reemplazadas por el extracto")}</li>
         )}

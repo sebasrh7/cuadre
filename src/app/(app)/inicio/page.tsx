@@ -5,6 +5,8 @@ import { headers } from "next/headers";
 import { calendarUrls } from "@/lib/dates/calendar-url";
 import { pilaBusinessDay, upcomingPilaDues } from "@/lib/dates/pila";
 import { DeadlinesCard, ExpensesCard, IncomeSection, RentaCard, SocialSecurityCard, Sources, monthName } from "./cards";
+import { DeclareIncomeForm } from "./declare-income-form";
+import { DECLARED_INCOME_CATEGORY, suggestedIncome } from "@/lib/movements/declared-income";
 import { loadTaxRules } from "@/lib/tax/load";
 import { checkRenta, unmeasuredRentaThresholds } from "@/lib/tax/renta";
 import { estimateSocialSecurity } from "@/lib/tax/social-security";
@@ -57,12 +59,19 @@ async function Dashboard() {
   // Un mes sin extracto (solo alertas o registros a mano) está incompleto: las alertas no traen
   // todos los ingresos. No cuenta para promedios ni para decir si toca aportar.
   const statementMonths = new Set(movements.filter((m) => m.source === "statement").map((m) => m.occurred_on.slice(0, 7)));
+  // Lo que el usuario declaró para un mes sin extracto cuenta como dato del mes hasta que llegue el extracto.
+  const declaredMonths = new Map(
+    movements
+      .filter((m) => m.source === "manual" && m.category === DECLARED_INCOME_CATEGORY)
+      .map((m) => [m.occurred_on.slice(0, 7), m.amount_cop]),
+  );
   const incomeByMonth = months.map((month) => ({
     month,
     income: movements
       .filter((m) => m.kind === "income" && m.occurred_on.startsWith(month))
       .reduce((t, m) => t + m.amount_cop, 0),
-    complete: statementMonths.has(month),
+    complete: statementMonths.has(month) || declaredMonths.has(month),
+    declared: !statementMonths.has(month) && declaredMonths.has(month),
   }));
   const incomeYtd = incomeByMonth.reduce((t, m) => t + m.income, 0);
   const depositsYtd = movements.filter((m) => m.direction === "in").reduce((t, m) => t + m.amount_cop, 0);
@@ -70,6 +79,8 @@ async function Dashboard() {
   const completeMonths = incomeByMonth.filter((m) => m.complete);
   const unclassified = movements.filter((m) => m.kind === "received").reduce((t, m) => t + m.amount_cop, 0);
   const lastCompleteMonth = completeMonths.at(-1);
+  const suggestion = suggestedIncome(incomeByMonth.filter((m) => m.complete && !m.declared).map((m) => m.income));
+  const pilaMonth = nextPila ? incomeByMonth.find((m) => m.month === nextPila.periodMonth) : undefined;
 
   return (
     <div className="flex flex-col gap-8">
@@ -78,7 +89,18 @@ async function Dashboard() {
       {nextPila && (
         <DeadlinesCard
           due={nextPila}
-          periodIncome={completeMonths.find((m) => m.month === nextPila.periodMonth)?.income ?? null}
+          periodIncome={pilaMonth?.complete ? pilaMonth.income : null}
+          periodDeclared={pilaMonth?.declared ?? false}
+          declareForm={
+            !pilaMonth?.complete || pilaMonth.declared ? (
+              <DeclareIncomeForm
+                month={nextPila.periodMonth}
+                monthLabel={monthName(nextPila.periodMonth).toLowerCase()}
+                suggestion={suggestion}
+                current={declaredMonths.get(nextPila.periodMonth)}
+              />
+            ) : null
+          }
           estimate={
             taxRules
               ? (income: number) =>
