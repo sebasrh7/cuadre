@@ -35,13 +35,19 @@ function isOwnName(name: string, own: OwnIdentity): boolean {
 /**
  * El extracto corta los nombres a ~12 caracteres ("SEBASTIAN RE"): un nombre
  * cortado es propio si es el comienzo de un nombre propio. Se exige un mínimo
- * de largo para que "ANA" no coincida con "ANA MARÍA …" por accidente.
+ * de largo para que "ANA" no coincida con "ANA MARÍA …" por accidente. Al
+ * revés, Nu manda el nombre completo: "ANDRES PRUEBA EJEMPLO" es propio si el
+ * usuario registró "Andrés Prueba" (nombre y al menos un apellido).
  */
 export function matchesOwnName(name: string, ownNames: string[]): boolean {
   const candidate = normalizeName(name);
   return ownNames.some((own) => {
     const full = normalizeName(own);
-    return full === candidate || (candidate.length >= 8 && full.startsWith(candidate));
+    return (
+      full === candidate ||
+      (candidate.length >= 8 && full.startsWith(candidate)) ||
+      (full.includes(" ") && candidate.startsWith(`${full} `))
+    );
   });
 }
 

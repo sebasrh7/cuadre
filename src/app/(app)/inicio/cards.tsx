@@ -8,27 +8,47 @@ import { estimateSocialSecurity } from "@/lib/tax/social-security";
 // Tarjetas de Inicio: solo presentación, sin acceso a datos. Las usa también
 // la página de demostración (con datos inventados) para las capturas del README.
 
-export function IncomeSection({ year, incomeByMonth }: { year: number; incomeByMonth: { month: string; income: number }[] }) {
-  const months = incomeByMonth.map((m) => m.month);
+export function IncomeSection({
+  year,
+  incomeByMonth,
+}: {
+  year: number;
+  /** `complete: false`: mes sin extracto (solo alertas); no entra en el promedio. */
+  incomeByMonth: { month: string; income: number; complete?: boolean }[];
+}) {
   const incomeYtd = incomeByMonth.reduce((t, m) => t + m.income, 0);
+  const complete = incomeByMonth.filter((m) => m.complete !== false);
+  const averaged = complete.length ? complete : incomeByMonth;
+  const average = Math.round(averaged.reduce((t, m) => t + m.income, 0) / averaged.length);
+  const partial = incomeByMonth.filter((m) => m.complete === false);
   const maxIncome = Math.max(...incomeByMonth.map((m) => m.income), 1);
   return (
     <section className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
-        <Stat label={`Ingresos ${year} (${months.length} ${months.length === 1 ? "mes" : "meses"})`} value={formatCop(incomeYtd)} />
-        <Stat label="Promedio mensual" value={formatCop(Math.round(incomeYtd / months.length))} />
+        <Stat
+          label={`Ingresos ${year} (${averaged.length} ${averaged.length === 1 ? "mes" : "meses"})`}
+          value={formatCop(incomeYtd)}
+        />
+        <Stat label="Promedio mensual" value={formatCop(average)} />
       </div>
       <ul className="flex flex-col gap-1 text-sm">
-        {incomeByMonth.map(({ month, income }) => (
+        {incomeByMonth.map(({ month, income, complete }) => (
           <li key={month} className="grid grid-cols-[6rem_1fr_7rem] items-center gap-3">
             <span className="text-muted">{monthName(month)}</span>
-            <span className="h-2 rounded bg-accent" style={{ width: `${(income / maxIncome) * 100}%` }} />
-            <span className="text-right tabular-nums">{formatCop(income)}</span>
+            <span
+              className={`h-2 rounded ${complete === false ? "bg-border" : "bg-accent"}`}
+              style={{ width: `${(income / maxIncome) * 100}%` }}
+            />
+            <span className="text-right tabular-nums">
+              {complete === false ? <span className="text-muted">sin extracto</span> : formatCop(income)}
+            </span>
           </li>
         ))}
       </ul>
       <p className="text-xs text-muted">
         Ingresos = lo que entra a tus cuentas sin contar transferencias entre ellas.{" "}
+        {partial.length > 0 &&
+          `${partial.map((m) => monthName(m.month)).join(", ")}: todavía sin extracto (solo alertas), no cuenta en el promedio. `}
         <Link href="/importar" className="underline">
           Importar otro extracto
         </Link>

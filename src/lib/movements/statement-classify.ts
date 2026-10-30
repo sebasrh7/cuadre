@@ -45,15 +45,25 @@ export function classifyStatementMovement(m: StatementMovement, bank: StatementB
   if (/^TRANSFERENCIAS? A NEQUI/.test(text)) return { kind: "wallet_transfer", counterparty: "Nequi" };
 
   const person = /^TRANSF A (.+)$/.exec(m.description);
-  if (person) return { kind: "person_transfer", counterparty: person[1].trim() };
+  if (person) {
+    const name = person[1].trim();
+    // Facturas pagadas por transferencia (`TRANSF A ACUAVALLE SA ESP`): es un gasto con la empresa.
+    if (COMPANY_SUFFIX.test(name)) return { kind: "expense", counterparty: name };
+    return { kind: "person_transfer", counterparty: name };
+  }
 
   if (m.amountCents > 0) return { kind: "other_income", counterparty: m.description || null };
 
   if (text.startsWith("RETIRO CAJERO")) return { kind: "expense", counterparty: "Retiro en cajero" };
+  // Cobro mensual de la propia cuenta: `COBRO SUSCR CTA 1234 07 26`.
+  if (/^COBRO SUSCR CTA \d+/.test(text)) return { kind: "expense", counterparty: "Cuota de manejo Bancolombia" };
   const prefix = EXPENSE_PREFIXES.find((p) => text.startsWith(p));
   const rest = prefix ? m.description.slice(prefix.length).trim() : m.description;
   return { kind: "expense", counterparty: rest || m.description || null };
 }
+
+/** Sociedades: `SA`, `SAS`, `ESP`, `LTDA` al final del nombre. */
+const COMPANY_SUFFIX = /\b(S\.?A\.?S?|E\.?S\.?P|LTDA|S EN C)\.?$/i;
 
 /** Prefijos de Nequi que anteceden al comercio en un gasto. */
 const NEQUI_EXPENSE_PREFIXES = [/^PAGO EN QR BRE-B:\s*/i, /^COMPRA (PIN )?(PTM )?/i, /^PAGO (EN |PTM )?/i];
@@ -88,7 +98,7 @@ function classifyNuMovement(m: StatementMovement): ClassifiedMovement {
   if (m.amountCents > 0) return { kind: "other_income", counterparty: text || null };
 
   const purchase = /^Compra en\s+(.+?)(?:\s+con tarjeta d[eé]bito)?$/i.exec(text);
-  return { kind: "expense", counterparty: purchase?.[1].trim() || text || null };
+  return { kind: "expense", counterparty: withoutProcessor(purchase?.[1].trim() || text) || null };
 }
 
 function classifyNuCardMovement(m: StatementMovement): ClassifiedMovement {
@@ -98,10 +108,13 @@ function classifyNuCardMovement(m: StatementMovement): ClassifiedMovement {
   if (/^Pago$/i.test(text)) return { kind: "self_transfer", counterparty: "Pago tarjeta Nu" };
   if (m.amountCents > 0) return { kind: "other_income", counterparty: text || null };
 
-  // `Spotify Pago*Spotify Bogota`: primero el nombre del comercio, luego el descriptor del pago.
-  const descriptor = /^(.*?)\s*\S+\*(.+)$/.exec(text);
-  const merchant = descriptor ? descriptor[1] || descriptor[2] : text;
-  return { kind: "expense", counterparty: merchant.trim() || text || null };
+  return { kind: "expense", counterparty: withoutProcessor(text) || null };
+}
+
+/** `Mercado Pago*Mercadoli`, `MERPAGO*TRAJE`: antes del `*` va la pasarela de pago; después, el comercio. */
+function withoutProcessor(text: string): string {
+  const merchant = /\*\s*(.+)$/.exec(text)?.[1].trim();
+  return merchant || text;
 }
 
 export interface MonthlyInterest {

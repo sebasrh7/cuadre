@@ -17,6 +17,7 @@ describe("categoryByKeyword", () => {
     ["FLYPASS", "Transporte"],
     ["ESTACION D", "Transporte"],
     ["TIENDA D", "Mercado"],
+    ["MERCADOLI", "Compras"],
     ["NETFLIX COM", "Suscripciones"],
     ["CELSIA COLOMBIA SA", "Servicios públicos"],
     ["CLARO COLOMBIA", "Telefonía e internet"],

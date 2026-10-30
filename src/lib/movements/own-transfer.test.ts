@@ -57,4 +57,17 @@ describe("matchesOwnName", () => {
   ])("%s → %s", (name, expected) => {
     expect(matchesOwnName(name, ownNames)).toBe(expected);
   });
+
+  it.each([
+    ["ANDRES PRUEBA EJEMPLO", true], // Nu manda el nombre completo; el usuario registró menos apellidos
+    ["Andrés Prueba", true],
+    ["ANDRES PRUEBASOTRO", false],
+    ["ANDRES OTRO PRUEBA", false],
+  ])("con el nombre registrado sin segundo apellido: %s → %s", (name, expected) => {
+    expect(matchesOwnName(name, ["Andrés Prueba"])).toBe(expected);
+  });
+
+  it("un solo nombre registrado no marca a cualquiera con ese nombre", () => {
+    expect(matchesOwnName("ANDRES PRUEBA EJEMPLO", ["Andrés"])).toBe(false);
+  });
 });
