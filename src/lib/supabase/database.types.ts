@@ -39,6 +39,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      assets: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          user_id: string
+          value_cop: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          label?: string | null
+          user_id?: string
+          value_cop: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          user_id?: string
+          value_cop?: number
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           day: string
@@ -196,6 +223,8 @@ export type Database = {
       }
       own_accounts: {
         Row: {
+          balance_cop: number | null
+          balance_on: string | null
           created_at: string
           id: string
           institution: string
@@ -205,6 +234,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          balance_cop?: number | null
+          balance_on?: string | null
           created_at?: string
           id?: string
           institution: string
@@ -214,6 +245,8 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          balance_cop?: number | null
+          balance_on?: string | null
           created_at?: string
           id?: string
           institution?: string

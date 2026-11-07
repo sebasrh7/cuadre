@@ -39,6 +39,11 @@ export default function PrivacyPage() {
             incluir nombres de terceros (personas a las que les transfieres); los usamos solo para mostrarte tus
             movimientos.
           </li>
+          <li>
+            Para el tope de patrimonio de la declaración de renta: el saldo de cierre de cada cuenta (del extracto o
+            el que escribas) y los bienes que registres, con su tipo y valor aproximado. No pedimos direcciones,
+            placas ni documentos de los bienes.
+          </li>
         </ul>
         <p>
           <strong>No recibimos ni guardamos</strong> el PDF del extracto ni su contraseña (se leen en tu navegador),

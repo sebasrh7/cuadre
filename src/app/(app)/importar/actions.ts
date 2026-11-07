@@ -108,6 +108,16 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
       },
       { onConflict: "user_id,institution,kind,last4", ignoreDuplicates: true },
     );
+  // Saldo de cierre para el patrimonio: solo si es más reciente que el guardado. La tarjeta es deuda, no suma.
+  if (statement.bank !== "nu_card") {
+    await supabase
+      .from("own_accounts")
+      .update({ balance_cop: Math.max(0, Math.round(statement.currentBalanceCents / 100)), balance_on: statement.to })
+      .eq("institution", statement.bank)
+      .eq("kind", ACCOUNT_KINDS[statement.bank])
+      .eq("last4", statement.accountLast4)
+      .or(`balance_on.is.null,balance_on.lte.${statement.to}`);
+  }
 
   // Las alertas (de Bancolombia) del periodo ya están en el extracto: se reemplazan para no contarlas
   // dos veces. Con otro banco no: una compra igual en otra cuenta borraría la alerta.
