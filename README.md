@@ -23,8 +23,9 @@
 | **Alertas del mes en curso** | El extracto es trimestral: las alertas de Bancolombia se pegan o se comparten desde el celular (Compartir → Cuadre en Android). Se leen en el navegador y, al llegar el extracto, sus movimientos las reemplazan sin duplicar. |
 | **Separa lo que es tuyo** | Detecta transferencias entre tus propias cuentas (Nequi, pago de la tarjeta Nu, tu nombre aunque el banco lo corte a 12 letras) para que no cuenten como ingreso ni gasto. |
 | **Categoriza gastos** | Reglas para comercios conocidos + **Gemini** (opcional) para el resto, con salida JSON validada con Zod, caché por comercio, cupo diario y correcciones del usuario que siempre ganan. Sin IA también funciona. |
-| **Seguridad social** | IBC (40 % del ingreso, piso 1 SMMLV, techo 25), salud, pensión y ARL mes a mes, con la fórmula visible. |
-| **¿Me toca declarar renta?** | Ingresos y consignaciones contra el tope en UVT, con proyección a fin de año. |
+| **Ingresos de verdad** | Lo que llega de una persona no cuenta como ingreso hasta que lo marcas: puede ser una deuda que te pagan. |
+| **Seguridad social** | IBC (40 % del ingreso, piso 1 SMMLV, techo 25), salud, pensión y ARL mes a mes, con la fórmula visible. Si todavía no llega el extracto de un mes, escribes cuánto recibiste y el extracto lo reemplaza después. |
+| **¿Me toca declarar renta?** | Ingresos, consignaciones, compras y consumos con tarjeta de crédito contra sus topes en UVT, con proyección a fin de año; y patrimonio bruto (saldos de tus cuentas más los bienes que registres). |
 | **Recordatorios** | Próxima fecha de la PILA (según los dos últimos dígitos de la cédula, días hábiles y festivos) y un calendario `.ics` para suscribirse desde Google Calendar. |
 | **Instalable** | PWA con botón "Instalar Cuadre"; el service worker solo recibe lo compartido y no guarda datos en caché. |
 | **Tus datos son tuyos** | Política de tratamiento de datos (Ley 1581), autorización expresa, exportar a Excel/JSON y borrar la cuenta con todo en cascada. |
@@ -45,11 +46,11 @@ Next.js 16 (App Router, Server Actions, Cache Components) · React 19 · TypeScr
 
 ```
 src/
-  app/                      Rutas (inicio, importar, alertas, movimientos, cuenta, privacidad, calendario .ics)
+  app/                      Rutas (inicio, importar, alertas, movimientos, ingresos, patrimonio, cuenta, privacidad, calendario .ics)
   lib/parsers/              Lectores puros de los extractos (Bancolombia, Nequi, Cuenta Nu, tarjeta Nu) y de las alertas de Bancolombia
   lib/movements/            Clasificación, transferencias propias, plan de importación, conciliación
   lib/categories/           Reglas, orquestación con caché/cupo y proveedor de Gemini
-  lib/tax/                  Seguridad social y renta a partir de tax_rules
+  lib/tax/                  Seguridad social, renta y patrimonio a partir de tax_rules
   lib/dates/                Festivos (Ley 51 de 1983), días hábiles, PILA, iCalendar
 supabase/migrations/        Esquema, RLS, funciones y reglas fiscales con su fuente
 docs/ALCANCE.md             Alcance, decisiones y plan
