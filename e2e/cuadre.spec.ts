@@ -187,7 +187,7 @@ test.describe("flujo completo de un usuario", () => {
     const paid = zip("pagada.zip", buildDianAttachedDocumentXml());
     const cash = zip(
       "efectivo.zip",
-      buildDianAttachedDocumentXml({ number: "POS77", cufe: fixtureCufe("cd34"), issuerName: "FERRETERIA EJEMPLO", total: "13370.00" }),
+      buildDianAttachedDocumentXml({ number: "POS77", cufe: fixtureCufe("cd34"), issuerName: "PAPELERIA SIN PAGO", total: "13370.00" }),
     );
 
     await page.goto("/facturas");
@@ -211,7 +211,7 @@ test.describe("flujo completo de un usuario", () => {
     // Una factura no es un gasto nuevo: solo acompaña al que ya estaba.
     await page.goto("/movimientos");
     await expect(page.getByRole("link", { name: "factura", exact: true })).toHaveCount(1);
-    await expect(page.getByText("FERRETERIA EJEMPLO")).toHaveCount(0);
+    await expect(page.getByText("PAPELERIA SIN PAGO")).toHaveCount(0);
   });
 
   test("el patrimonio suma los saldos de cierre de los extractos y los bienes", async ({ page }) => {
