@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 /** Todos los datos del usuario en JSON (portabilidad, Ley 1581). */
 export async function GET() {
   const { supabase, userId } = await requireUser();
-  const [profile, accounts, assets, aliases, movements, foreignIncomes, categories] = await Promise.all([
+  const [profile, accounts, assets, aliases, movements, foreignIncomes, categories, invoices] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).single(),
     supabase.from("own_accounts").select("institution, kind, last4, label, balance_cop, balance_on, created_at"),
     supabase.from("assets").select("kind, label, value_cop, created_at"),
@@ -11,6 +11,7 @@ export async function GET() {
     supabase.from("movements").select("occurred_on, occurred_at_time, amount_cop, direction, kind, counterparty, account_last4, category, source, created_at").order("occurred_on"),
     supabase.from("foreign_incomes").select("received_on, currency, amount_minor, payer, created_at"),
     supabase.from("merchant_categories").select("merchant_key, category, source, updated_at"),
+    supabase.from("invoices").select("cufe, number, issued_on, issuer_nit, issuer_name, total_cop, created_at").order("issued_on"),
   ]);
 
   const body = JSON.stringify(
@@ -24,6 +25,7 @@ export async function GET() {
       movements: movements.data,
       foreignIncomes: foreignIncomes.data,
       merchantCategories: categories.data,
+      invoices: invoices.data,
     },
     null,
     2,

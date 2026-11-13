@@ -18,6 +18,9 @@ export default function MovementsPage() {
           <Link href="/importar" className="text-accent underline">
             Importar extracto
           </Link>
+          <Link href="/facturas" className="text-accent underline">
+            Facturas
+          </Link>
         </div>
       </div>
       <Suspense fallback={<p className="text-muted">Cargando…</p>}>
@@ -29,12 +32,15 @@ export default function MovementsPage() {
 
 async function MovementList() {
   const { supabase } = await requireConsentedUser();
-  const { data, error } = await supabase
-    .from("movements")
-    .select("id, occurred_on, amount_cop, direction, kind, counterparty, category, source")
-    .order("occurred_on", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(500);
+  const [{ data, error }, { data: invoices }] = await Promise.all([
+    supabase
+      .from("movements")
+      .select("id, occurred_on, amount_cop, direction, kind, counterparty, category, source")
+      .order("occurred_on", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(500),
+    supabase.from("invoices").select("movement_id, issuer_name, number").not("movement_id", "is", null),
+  ]);
 
   if (error) return <p className="text-danger">No pudimos cargar tus movimientos.</p>;
   if (!data.length) {
@@ -45,6 +51,7 @@ async function MovementList() {
     );
   }
 
+  const invoiceOf = new Map((invoices ?? []).map((i) => [i.movement_id, i]));
   const months = Map.groupBy(data, (m) => m.occurred_on.slice(0, 7));
   const uncategorized = data.filter((m) => m.kind === "expense" && !m.category && m.counterparty).length;
 
@@ -88,6 +95,15 @@ async function MovementList() {
                       >
                         alerta
                       </span>
+                    )}
+                    {invoiceOf.has(m.id) && (
+                      <Link
+                        href="/facturas"
+                        title={`Factura ${invoiceOf.get(m.id)!.number} de ${invoiceOf.get(m.id)!.issuer_name}`}
+                        className="rounded border border-border px-1 text-muted"
+                      >
+                        factura
+                      </Link>
                     )}
                     {(m.kind === "received" || m.kind === "income") && !m.category && m.source !== "manual" ? (
                       <IncomeToggle key={m.kind} id={m.id} isIncome={m.kind === "income"} />

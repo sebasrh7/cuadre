@@ -36,7 +36,7 @@
 |---|---|---|---|
 | 1 | **Extracto Bancolombia (PDF, trimestral)** | Se sube y se lee **en el navegador** con la contraseña del usuario; el PDF nunca sale del dispositivo, al servidor solo llegan los movimientos extraídos | v1 ✅ |
 | 2 | **Alertas de Bancolombia** | Pegar el texto o compartirlo desde el celular (Web Share Target). Se leen en el navegador; al importar el extracto, sus movimientos reemplazan a las alertas | v1 ✅ |
-| 3 | **Facturas electrónicas DIAN (ZIP/XML)** | Arrastrar el archivo. Aporta NIT, razón social y soporte del gasto | v2 |
+| 3 | **Facturas electrónicas DIAN (ZIP/XML)** ✅ | Se sube el adjunto del correo y se lee **en el navegador**; al servidor solo llegan vendedor (NIT y nombre), número, fecha, total y CUFE. No se guarda el archivo: con el CUFE se consulta la factura en la DIAN. Lector escrito contra el anexo técnico público (UBL 2.1); **pendiente de confirmar con una factura real anonimizada** (`npm run anonimizar-factura`) | v2 ✅ |
 | 4 | **Ingresos en USD (opcional)** | Solo para quien conoce el monto en USD: se concilia con el `ABONO DE GIRO INTERNACIONAL` y da la tasa efectiva. El usuario de referencia cobra un monto fijo en pesos y no conoce los dólares, así que los ingresos salen del extracto en COP | v1 |
 | 5 | Nequi ✅, Cuenta Nu ✅, tarjeta de crédito Nu ✅ | Extractos en PDF, leídos en el navegador y verificados contra su resumen como los de Bancolombia. Tarjeta: cada compra cuenta una vez por su valor total en la fecha de compra (no por cuotas); intereses y cargos son gastos; el pago, de cualquier lado, es transferencia propia. Extractos de la tarjeta con devoluciones: todavía no (se rechazan sin guardar nada) | v1 ✅ (adelantado de la v2) |
 | 6 | Importación automática desde Gmail | OAuth con Gmail (`gmail.readonly` es *scope* restringido: verificación de Google en producción; en modo testing alcanza para ≤100 usuarios) | v2 |
@@ -44,7 +44,7 @@
 ### Conciliación
 
 - Alerta y movimiento del extracto del mismo día, monto y cuenta → un solo movimiento (la alerta llega primero; el extracto la confirma).
-- Factura DIAN y gasto de igual monto en ±3 días → se enlazan (la factura enriquece el gasto).
+- Factura DIAN y gasto del mismo valor exacto, pagado entre 3 días antes y 30 días después de la fecha de la factura (servicios públicos y seguros se pagan semanas después) → se enlazan; entre varias parejas posibles gana la de fechas más cercanas. La factura acompaña al gasto como soporte: no crea movimientos ni cambia ningún cálculo. Se reintenta al subir facturas y en cada importación de extracto o alertas.
 - **Transferencias propias** (mismo titular, llaves o cuentas registradas como propias, pago de la tarjeta de crédito) → se marcan como `own_transfer` y no cuentan como ingreso ni gasto.
 - **Recibido de personas** (o abonos sin identificar) → queda como `received` y no cuenta como ingreso hasta que el usuario lo marque: puede ser una deuda que le pagan o efectivo cambiado por transferencia. Para las consignaciones que mira la DIAN sí cuenta.
 - **Ingreso declarado:** para un mes sin extracto el usuario escribe cuánto le llegó (uno por mes); el extracto lo reemplaza cuando trae ingresos de ese mes.
@@ -57,7 +57,7 @@
 | 2 | Onboarding (≤2 min) ✅ | Tipo de independiente, riesgo ARL, últimos dígitos del NIT/cédula, **cuentas, llaves y nombres propios** (para detectar transferencias propias) |
 | 3 | Importar extractos ✅ | Bancolombia, Nequi, Cuenta Nu y tarjeta de crédito Nu. PDF + contraseña, procesado en el navegador; se verifica contra su resumen y hay vista previa antes de guardar |
 | 4 | Pegar/compartir alertas ✅ | `/alertas` (varias a la vez) y Compartir → Cuadre en Android con un service worker que no guarda caché. Las alertas son provisionales: el extracto las reemplaza (monto, sentido y fecha ±1 día) y heredan su categoría |
-| 5 | Facturas DIAN → **v2** | ZIP/XML → gasto enriquecido con NIT y soporte. ~3 al mes y no cambian ningún cálculo |
+| 5 | Facturas DIAN ✅ (v2) | `/facturas`: ZIP/XML → factura enlazada con el gasto que la pagó, con enlace a la consulta de la DIAN. Notas crédito y facturas en otra moneda se rechazan. ~3 al mes y no cambian ningún cálculo |
 | 6 | Ingresos en USD (registro manual ✅); TRM y pérdida cambiaria → **v2** | Solo si el usuario conoce el monto en USD. Quien cobra un monto fijo en pesos no puede ver ni controlar la conversión |
 | 7 | Categorización de gastos (IA) ✅ | Comercio nuevo → Gemini propone categoría → caché por comercio normalizado; el usuario puede corregir |
 | 8 | Panel mensual y anual ✅ | Ingresos por mes y gastos por categoría (año y último mes). Comparación detallada entre meses → v2 |
@@ -69,7 +69,7 @@
 
 ## 6. Fuera de alcance v1
 
-Extractos de la tarjeta Nu con devoluciones · facturas DIAN · TRM y pérdida cambiaria · lectura de fotos de recibos con IA · asistente RAG sobre normativa · emitir facturas electrónicas · conexión directa con bancos · generar el formulario de renta · personas jurídicas / régimen simple · otros países · importación automática desde Gmail.
+Extractos de la tarjeta Nu con devoluciones · TRM y pérdida cambiaria · lectura de fotos de recibos con IA · asistente RAG sobre normativa · emitir facturas electrónicas · conexión directa con bancos · generar el formulario de renta · personas jurídicas / régimen simple · otros países · importación automática desde Gmail.
 
 ## 7. Arquitectura y stack
 
@@ -81,6 +81,7 @@ Extractos de la tarjeta Nu con devoluciones · facturas DIAN · TRM y pérdida c
 | Validación | Zod en toda entrada y en toda respuesta de IA |
 | Parsers | Funciones puras en `src/lib/parsers/`, probadas con fixtures sintéticos |
 | Extracto PDF | pdf.js en el navegador (soporta PDF con contraseña) |
+| Facturas DIAN | fflate (ZIP) y fast-xml-parser (XML) en el navegador |
 | TRM (v2) | API de datos abiertos (datos.gov.co), cacheada en `fx_rates` una vez al día. **Verificar el endpoint antes de implementarlo** |
 | IA | Gemini Flash (plan gratuito) detrás de `CategoryProvider`; caché, límite diario por usuario, *fallback* "Sin categoría" |
 | Recordatorios | Calendario `.ics` suscribible (Google Calendar avisa); sin correos ni cron |
@@ -99,8 +100,9 @@ La fuente de verdad es `supabase/migrations/`.
 - `assets`: bienes para el patrimonio (`kind`, `label`, `value_cop`).
 - `merchant_categories` (caché de categoría por comercio: `user` | `ai` | `rule`) y `ai_usage` (cupo diario).
 - `tax_rules` (por año, con URL de la fuente) y `pila_deadlines` (día hábil por dígitos, con su norma).
+- `invoices` (DIAN): `cufe`, `number`, `issued_on`, `issuer_nit`, `issuer_name`, `total_cop`, `movement_id`.
 - `feedback`; el esquema `analytics` (métricas agregadas) no está expuesto por la API.
-- Para la v2: `invoices` (DIAN) y `fx_rates` (TRM), todavía sin crear.
+- Para la v2: `fx_rates` (TRM), todavía sin crear.
 
 **Regla:** los valores fiscales nunca van en el código; viven en `tax_rules` y se verifican contra DIAN / UGPP / MinSalud antes de publicarse.
 
@@ -118,6 +120,7 @@ Usuarios activos al mes · retención del mes 2 · % de movimientos que entran p
 | **3** ✅ | Categorización con reglas + Gemini, panel. (Facturas DIAN y TRM → v2) |
 | **4** ✅ | Exportar/borrar, privacidad, CI con e2e (Playwright + Supabase local), recordatorios de PILA, comentarios, Sentry, métricas, PWA instalable, ajustes para celular, alertas pegadas y compartidas, README con capturas |
 | **4b** ✅ | Con los datos reales del autor: extractos de Nequi, Cuenta Nu y tarjeta Nu, meses sin extracto, recibido de personas sin clasificar, ingreso declarado de un mes sin extracto, patrimonio, compras y tarjeta en renta |
+| **v2** (en curso) | Facturas DIAN ✅ · TRM y pérdida cambiaria · importación desde Gmail |
 | **5** | **Lanzamiento a 10-20 personas** y decidir la v2 con sus comentarios. Pendiente de terceros: fechas de renta 2027 cuando la DIAN publique el calendario |
 
 ## 10. Riesgos

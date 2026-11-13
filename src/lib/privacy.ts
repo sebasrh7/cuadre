@@ -1,7 +1,7 @@
 /** Cambia cuando cambie la política: los usuarios deben aceptarla de nuevo. */
-export const PRIVACY_VERSION = "3";
+export const PRIVACY_VERSION = "4";
 /** Desde cuándo rige la versión actual. */
-export const PRIVACY_EFFECTIVE_DATE = "2026-10-30";
+export const PRIVACY_EFFECTIVE_DATE = "2026-11-13";
 
 /**
  * Identificación del responsable que exige el Decreto 1377 de 2013, art. 13:

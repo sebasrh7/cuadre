@@ -149,6 +149,53 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          created_at: string
+          cufe: string
+          id: string
+          issued_on: string
+          issuer_name: string
+          issuer_nit: string
+          movement_id: string | null
+          number: string
+          total_cop: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cufe: string
+          id?: string
+          issued_on: string
+          issuer_name: string
+          issuer_nit: string
+          movement_id?: string | null
+          number: string
+          total_cop: number
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          cufe?: string
+          id?: string
+          issued_on?: string
+          issuer_name?: string
+          issuer_nit?: string
+          movement_id?: string | null
+          number?: string
+          total_cop?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_movement_id_user_id_fkey"
+            columns: ["movement_id", "user_id"]
+            isOneToOne: true
+            referencedRelation: "movements"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
       merchant_categories: {
         Row: {
           category: string
