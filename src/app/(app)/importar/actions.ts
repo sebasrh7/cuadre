@@ -9,6 +9,7 @@ import {
   planStatementImport,
   reconcileForeignIncomes,
 } from "@/lib/movements/statement-import";
+import { linkInvoices } from "@/lib/movements/invoices";
 import { replaceAlertsWithStatement, replaceDeclaredIncome } from "@/lib/movements/load";
 import { verifyStatement } from "@/lib/parsers/statement";
 
@@ -125,6 +126,8 @@ export async function importStatement(input: ImportInput): Promise<ImportResult>
     statement.bank === "bancolombia" ? await replaceAlertsWithStatement(supabase, statement.from, statement.to) : 0;
   const replacedDeclared = await replaceDeclaredIncome(supabase, statement.from, statement.to, planned);
   const linkedIncomes = await linkForeignIncomes(supabase, statement.from, statement.to);
+  // Después de reemplazar las alertas: una factura enlazada a una alerta pasa al movimiento del extracto.
+  await linkInvoices(supabase);
   // Si la categorización falla, los movimientos ya quedaron guardados: se reintenta desde /movimientos.
   const categories = await categorizePendingExpenses(supabase, profile.ai_categorization).catch(() => null);
 

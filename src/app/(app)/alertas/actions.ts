@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireConsentedUser } from "@/lib/auth";
 import { categorizePendingExpenses } from "@/lib/categories/apply";
 import { matchAlertsToStatement, planAlertImport } from "@/lib/movements/alert-import";
+import { linkInvoices } from "@/lib/movements/invoices";
 import { dedupeHash, loadOwnIdentity, shiftDays } from "@/lib/movements/load";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -80,6 +81,7 @@ export async function saveAlerts(input: unknown): Promise<SaveAlertsResult> {
     inserted = data?.length ?? 0;
   }
 
+  if (inserted) await linkInvoices(supabase);
   const categories = await categorizePendingExpenses(supabase, profile.ai_categorization).catch(() => null);
   return {
     ok: true,
