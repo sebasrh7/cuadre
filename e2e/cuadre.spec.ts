@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { strToU8, zipSync } from "fflate";
+import { buildDianAttachedDocumentXml, fixtureCufe } from "../src/lib/parsers/__fixtures__/dian-invoice";
 import { buildNequiStatement } from "../src/lib/parsers/__fixtures__/nequi-statement";
 import { buildNuAccountStatement } from "../src/lib/parsers/__fixtures__/nu-account-statement";
 import { buildNuCardStatement } from "../src/lib/parsers/__fixtures__/nu-card-statement";
@@ -173,6 +175,43 @@ test.describe("flujo completo de un usuario", () => {
     await expect(page.getByText("Giro internacional")).toBeVisible();
     await expect(page.getByText("TIENDA EJEMPLO")).toBeVisible();
     await expect(page.getByText("alerta", { exact: true })).toHaveCount(0);
+  });
+
+  test("sube facturas electrónicas y las enlaza con el gasto que las pagó", async ({ page }) => {
+    // Como llega por correo: un ZIP con el XML y el PDF. La primera coincide con la compra del 5 de diciembre.
+    const zip = (name: string, xml: string) => ({
+      name,
+      mimeType: "application/zip",
+      buffer: Buffer.from(zipSync({ "factura.xml": strToU8(xml), "factura.pdf": strToU8("%PDF-1.7") })),
+    });
+    const paid = zip("pagada.zip", buildDianAttachedDocumentXml());
+    const cash = zip(
+      "efectivo.zip",
+      buildDianAttachedDocumentXml({ number: "POS77", cufe: fixtureCufe("cd34"), issuerName: "PAPELERIA SIN PAGO", total: "13370.00" }),
+    );
+
+    await page.goto("/facturas");
+    await page.getByLabel(/Facturas \(ZIP o XML\)/).setInputFiles([paid, cash]);
+    await page.getByRole("button", { name: "Leer facturas" }).click();
+    await expect(page.getByText("Factura FE1234 · NIT 900123456")).toBeVisible();
+    await page.getByRole("button", { name: "Guardar 2 facturas" }).click();
+
+    await expect(page.getByText("2 facturas nuevas")).toBeVisible();
+    await expect(page.getByText("1 enlazada con su gasto")).toBeVisible();
+    await expect(page.getByText("1 de 2 enlazadas con su gasto")).toBeVisible();
+    await expect(page.getByText(/Pagada el 2026-12-05 · TIENDA EJEMPLO/)).toBeVisible();
+    await expect(page.getByText("Sin gasto enlazado todavía")).toBeVisible();
+
+    // Subir la misma factura otra vez no la duplica.
+    await page.getByLabel(/Facturas \(ZIP o XML\)/).setInputFiles([paid]);
+    await page.getByRole("button", { name: "Leer facturas" }).click();
+    await page.getByRole("button", { name: "Guardar 1 factura" }).click();
+    await expect(page.getByText("1 ya estaba guardada")).toBeVisible();
+
+    // Una factura no es un gasto nuevo: solo acompaña al que ya estaba.
+    await page.goto("/movimientos");
+    await expect(page.getByRole("link", { name: "factura", exact: true })).toHaveCount(1);
+    await expect(page.getByText("PAPELERIA SIN PAGO")).toHaveCount(0);
   });
 
   test("el patrimonio suma los saldos de cierre de los extractos y los bienes", async ({ page }) => {

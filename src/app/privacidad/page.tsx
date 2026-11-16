@@ -44,9 +44,14 @@ export default function PrivacyPage() {
             el que escribas) y los bienes que registres, con su tipo y valor aproximado. No pedimos direcciones,
             placas ni documentos de los bienes.
           </li>
+          <li>
+            De las facturas electrónicas que subas: el NIT y el nombre del vendedor, el número, la fecha, el valor
+            total y el código único de la factura (CUFE). No guardamos lo que compraste ni tu nombre, documento o
+            dirección que vengan en la factura.
+          </li>
         </ul>
         <p>
-          <strong>No recibimos ni guardamos</strong> el PDF del extracto ni su contraseña (se leen en tu navegador),
+          <strong>No recibimos ni guardamos</strong> el PDF del extracto ni su contraseña, ni los archivos de las facturas (se leen en tu navegador),
           ni números completos de cuentas o tarjetas, ni contraseñas.
         </p>
       </Section>

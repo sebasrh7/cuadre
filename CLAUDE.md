@@ -16,6 +16,7 @@ Next.js 16 (App Router) + TypeScript estricto · Supabase (Postgres, RLS, Auth, 
 - `npm run db:config` — muestra los cambios de `supabase/config.toml` (con `-- --yes` los aplica); lee los secretos de `.env.local`
 - `npm run db:types` — regenera `src/lib/supabase/database.types.ts` desde el proyecto enlazado
 - `npm run anonimizar-extracto -- "ruta.pdf"` — lo corre el usuario en su terminal; nunca con PDFs reales dentro del repo
+- `npm run anonimizar-factura -- "ruta.zip"` — igual, para la estructura de una factura electrónica (ZIP o XML)
 
 Node 22.13 o superior (pdf.js lo exige). GitHub Actions corre lint, tipos, tests y build en cada push (`.github/workflows/ci.yml`).
 

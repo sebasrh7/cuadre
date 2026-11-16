@@ -22,6 +22,7 @@
 | **Importa el extracto** | Lee el PDF de Bancolombia, Nequi o Nu (cuenta y tarjeta de crédito) **en el navegador** con pdf.js: el archivo y su contraseña nunca salen del equipo. Verifica que el extracto cuadre (resumen, totales y saldo de cada movimiento) antes de guardar nada. Reimportar no duplica. |
 | **Alertas del mes en curso** | El extracto es trimestral: las alertas de Bancolombia se pegan o se comparten desde el celular (Compartir → Cuadre en Android). Se leen en el navegador y, al llegar el extracto, sus movimientos las reemplazan sin duplicar. |
 | **Separa lo que es tuyo** | Detecta transferencias entre tus propias cuentas (Nequi, pago de la tarjeta Nu, tu nombre aunque el banco lo corte a 12 letras) para que no cuenten como ingreso ni gasto. |
+| **Facturas electrónicas** | Subes el ZIP o el XML que llega al correo y Cuadre enlaza cada factura de la DIAN con el gasto que la pagó (mismo valor, fechas cercanas). Se lee en el navegador; solo se guardan vendedor, número, fecha, valor y CUFE. |
 | **Categoriza gastos** | Reglas para comercios conocidos + **Gemini** (opcional) para el resto, con salida JSON validada con Zod, caché por comercio, cupo diario y correcciones del usuario que siempre ganan. Sin IA también funciona. |
 | **Ingresos de verdad** | Lo que llega de una persona no cuenta como ingreso hasta que lo marcas: puede ser una deuda que te pagan. |
 | **Seguridad social** | IBC (40 % del ingreso, piso 1 SMMLV, techo 25), salud, pensión y ARL mes a mes, con la fórmula visible. Si todavía no llega el extracto de un mes, escribes cuánto recibiste y el extracto lo reemplaza después. |
@@ -40,14 +41,14 @@
 
 ## Stack
 
-Next.js 16 (App Router, Server Actions, Cache Components) · React 19 · TypeScript estricto · Tailwind CSS 4 · Supabase (Postgres, Auth, RLS) · Zod · pdf.js · Gemini · Sentry · Vitest · Playwright · GitHub Actions · Vercel
+Next.js 16 (App Router, Server Actions, Cache Components) · React 19 · TypeScript estricto · Tailwind CSS 4 · Supabase (Postgres, Auth, RLS) · Zod · pdf.js · fflate · fast-xml-parser · Gemini · Sentry · Vitest · Playwright · GitHub Actions · Vercel
 
 ## Estructura
 
 ```
 src/
-  app/                      Rutas (inicio, importar, alertas, movimientos, ingresos, patrimonio, cuenta, privacidad, calendario .ics)
-  lib/parsers/              Lectores puros de los extractos (Bancolombia, Nequi, Cuenta Nu, tarjeta Nu) y de las alertas de Bancolombia
+  app/                      Rutas (inicio, importar, alertas, facturas, movimientos, ingresos, patrimonio, cuenta, privacidad, calendario .ics)
+  lib/parsers/              Lectores puros de los extractos (Bancolombia, Nequi, Cuenta Nu, tarjeta Nu), de las alertas de Bancolombia y de las facturas de la DIAN
   lib/movements/            Clasificación, transferencias propias, plan de importación, conciliación
   lib/categories/           Reglas, orquestación con caché/cupo y proveedor de Gemini
   lib/tax/                  Seguridad social, renta y patrimonio a partir de tax_rules
